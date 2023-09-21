@@ -5,22 +5,24 @@ import os
 # Excel application'ı başlat
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
-excel.TopMostWindow = True # Excel dosyasını en üstte tutar
+
+# A2'de "Notlar" yazısını ekleyen fonksiyon
+def add_notes_title(worksheet):
+    cell = worksheet.Cells(2, 1)  # A2 hücresini seç
+    cell.Value = "Notlar"  # Hücreye "Notlar" yazısı ekle
+    cell.Font.Bold = True  # Yazıyı kalın yap
+    cell.HorizontalAlignment = -4108  # Ortala hizala
+    worksheet.Range("B2:C2").Merge()  # B2 ve C2 hücrelerini birleştir
 
 # A3'den D'deki en son satıra kadar olan hücrelere kenarlık eklemek için fonksiyon
-
-
 def add_border_to_range(worksheet, start_cell, end_cell):
     range_to_border = worksheet.Range(start_cell, end_cell)
     range_to_border.Borders.LineStyle = 1  # Kenarlık çizgilerini ince olarak ayarla
-
 
 # A3'den D3'e kadar olan verileri bir diziye ekleyin
 header = ["Malzeme Kodu", "Malzeme Aciklamasi", "Sarf Miktar", "Birim"]
 
 # Excel dosyasını oluşturmak için fonksiyon
-
-
 def create_excel():
     excel_filename = excel_filename_entry.get()
     copied_text = root.clipboard_get()  # Kopyalanan metni al
@@ -31,12 +33,9 @@ def create_excel():
     worksheet = workbook.Worksheets(1)
     worksheet.Range("A:E").VerticalAlignment = -4108  # Dikeyde ortala
     worksheet.Range("A:B").HorizontalAlignment = -4108  # A kolonunu ortala
-    worksheet.Range("B:C").HorizontalAlignment = - \
-        4131  # B kolonunu sola dayalı
-    worksheet.Range("C:D").HorizontalAlignment = - \
-        4152  # A kolonunu sağa dayalı
-    worksheet.Range("D:E").HorizontalAlignment = - \
-        4108  # A kolonunu ortala hizala
+    worksheet.Range("B:C").HorizontalAlignment = -4131  # B kolonunu sola dayalı
+    worksheet.Range("C:D").HorizontalAlignment = -4152  # A kolonunu sağa dayalı
+    worksheet.Range("D:E").HorizontalAlignment = -4108  # A kolonunu ortala hizala
     worksheet.Range("A3:E3").HorizontalAlignment = -4108
     worksheet.Range("A3:E3").VerticalAlignment = -4108
     # Başlık verilerini A3'den D3'e yerleştirin
@@ -52,7 +51,6 @@ def create_excel():
 
         for value in values:  # Satırdaki her değer için
             if values != ['']:  # tab'dan kalan son boşluğu es geçmek için
-
                 cell = worksheet.Cells(row, col)  # Hücreyi seç
                 if col == 3:
                     # Öncelikle hücre biçimini metin olarak ayarla çünkü diğer türlü uzun sayılarda virgül yok oluyor
@@ -64,7 +62,6 @@ def create_excel():
                 # Eğer hücre boşsa veya bu son hücre ise arka planı kırmızıya boyayın
                 if not cell.Value:
                     cell.Interior.Color = 255  # Kırmızı rengi temsil eden değer
-
                 col += 1  # Sütunu bir artır
         # Bir sonraki satıra geçmeden önce kontrol et
         if values:
@@ -73,6 +70,9 @@ def create_excel():
     # A3'den D'deki en son satıra kadar olan hücrelere kenarlık ekleyin
     add_border_to_range(worksheet, "A3", "D" + str(row - 2))
     worksheet.Columns.AutoFit()
+
+    # A2'de "Notlar" yazısını ekleyin
+    add_notes_title(worksheet)
 
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
 
@@ -88,21 +88,29 @@ def create_excel():
     # Programı 2 saniye sonra kapat
     root.after(1500, lambda: root.destroy())
 
-
 # Tkinter penceresini oluştur
 root = tk.Tk()
 root.geometry("400x200")
 root.title("Excel Oluştur")
 
+# "Evet" düğmesi
+yes_button = tk.Button(root, text="Evet", command=lambda: [confirmation_label.pack_forget(), yes_button.pack_forget(), excel_filename_label.pack(), excel_filename_entry.pack(), create_button.pack()])
+
+# Kullanıcıya reçeteyi kopyaladığından emin mi diye sor
+confirmation_label = tk.Label(root, text="Reçeteyi başlıksız olarak kopyaladığınızdan emin misiniz?")
+confirmation_label.pack()
+
 # Excel dosyasının adı için etiket
 excel_filename_label = tk.Label(root, text="Excel Dosyası Adı:")
-excel_filename_label.pack()
+
+# Excel dosyası adı için giriş alanı
 excel_filename_entry = tk.Entry(root)
-excel_filename_entry.pack()
 
 # "Oluştur" düğmesi
 create_button = tk.Button(root, text="Oluştur", command=create_excel)
-create_button.pack()
+
+# "Evet" düğmesini ekleyin
+yes_button.pack()
 
 # Tkinter penceresini başlat
 root.mainloop()
