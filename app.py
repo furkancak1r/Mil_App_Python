@@ -10,11 +10,19 @@ excel.Visible = True  # Excel penceresini görünür yap
 
 
 def add_notes_title(worksheet):
-    cell = worksheet.Cells(2, 1)  # A2 hücresini seç
-    cell.Value = "Notlar"  # Hücreye "Notlar" yazısı ekle
-    cell.Font.Bold = True  # Yazıyı kalın yap
-    cell.HorizontalAlignment = -4108  # Ortala hizala
+    worksheet.Cells(2, 1).Value = "Notlar"  # Hücreye "Notlar" yazısı ekle
+    worksheet.Cells(2, 1).Font.Bold = True  # Yazıyı kalın yap
+    worksheet.Cells(2, 1).HorizontalAlignment = -4108  # Ortala hizala
+    worksheet.Cells(2, 4).Value = "Ürün Adeti"  # Hücreye "Notlar" yazısı ekle
+    worksheet.Cells(2, 4).Font.Bold = True  # Yazıyı kalın yap
+    worksheet.Cells(2, 4).HorizontalAlignment = -4108  # Ortala hizala
     worksheet.Range("B2:C2").Merge()  # B2 ve C2 hücrelerini birleştir
+
+    # "A1:E1" aralığındaki hücreleri birleştir ve fontunu kalın yap
+    merged_cell = worksheet.Range("A1:E1")
+    merged_cell.Merge()
+    merged_cell.Font.Bold = True
+
 
 # A3'den D'deki en son satıra kadar olan hücrelere kenarlık eklemek için fonksiyon
 
@@ -44,11 +52,13 @@ def create_excel():
     worksheet.Range("B:C").HorizontalAlignment = - \
         4131  # B kolonunu sola dayalı
     worksheet.Range("C:D").HorizontalAlignment = - \
-        4152  # A kolonunu sağa dayalı
+        4108  # C kolonunu ortala
     worksheet.Range("D:E").HorizontalAlignment = - \
         4108  # A kolonunu ortala hizala
     worksheet.Range("A3:E3").HorizontalAlignment = -4108
     worksheet.Range("A3:E3").VerticalAlignment = -4108
+    worksheet.Rows[2].RowHeight = 100  # 2. satırın yüksekliğini 100 yap
+
     # Başlık verilerini A3'den D3'e yerleştirin
     for col, header_text in enumerate(header, 1):
         cell = worksheet.Cells(3, col)
@@ -62,8 +72,8 @@ def create_excel():
 
         for value in values:  # Satırdaki her değer için
             if values != ['']:  # tab'dan kalan son boşluğu es geçmek için
-                worksheet.Cells(row, 4).NumberFormat = "@" # Öncelikle hücre biçimini metin olarak ayarla çünkü diğer türlü uzun sayılarda virgül yok oluyor
-
+                # Öncelikle hücre biçimini metin olarak ayarla çünkü diğer türlü uzun sayılarda virgül yok oluyor
+                worksheet.Cells(row, 4).NumberFormat = "@"
 
                 if col == 1:
                     worksheet.Cells(row, 1).Value = value  # Hücreye değeri yaz
@@ -94,7 +104,7 @@ def create_excel():
             row += 1  # Satırı bir artır
 
     # A3'den D'deki en son satıra kadar olan hücrelere kenarlık ekleyin
-    add_border_to_range(worksheet, "A3", "E" + str(row - 2))
+    add_border_to_range(worksheet, "A1", "E" + str(row - 2))
     worksheet.Columns.AutoFit()
 
     # A2'de "Notlar" yazısını ekleyin
