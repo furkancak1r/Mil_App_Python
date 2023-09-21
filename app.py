@@ -6,6 +6,10 @@ import os
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
 
+# A3'den E3'e kadar olan verileri bir diziye ekleyin
+header = ["Malzeme Kodu", "Malzeme Açıklaması",
+          "Birim Sarf Miktar", "Toplam Sarf Miktar", "Birim"]
+
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
 
@@ -23,7 +27,6 @@ def add_notes_title(worksheet):
     merged_cell.Merge()
     merged_cell.Font.Bold = True
 
-
 # A3'den D'deki en son satıra kadar olan hücrelere kenarlık eklemek için fonksiyon
 
 
@@ -32,16 +35,11 @@ def add_border_to_range(worksheet, start_cell, end_cell):
     range_to_border.Borders.LineStyle = 1  # Kenarlık çizgilerini ince olarak ayarla
 
 
-# A3'den E3'e kadar olan verileri bir diziye ekleyin
-header = ["Malzeme Kodu", "Malzeme Açıklaması",
-          "Birim Sarf Miktar", "Toplam Sarf Miktar", "Birim"]
-
 # Excel dosyasını oluşturmak için fonksiyon
-
-
 def create_excel():
     excel_filename = excel_filename_entry.get()
     copied_text = root.clipboard_get()  # Kopyalanan metni al
+
     current_directory = os.getcwd()  # Python dosyasının bulunduğu dizin
     excel_file_path = os.path.join(
         current_directory, excel_filename)  # Excel dosyasının tam yolu
@@ -125,31 +123,78 @@ def create_excel():
     root.after(1500, lambda: root.destroy())
 
 
+def create_root():
+    root = tk.Tk()
+    root.geometry("400x200")
+    root.title("Excel Oluştur")
+    return root
+
+
+def create_yes_button(root):
+    def on_yes_button_click():
+        confirmation_label.destroy()
+        yes_button.destroy()
+        excel_filename_label.pack()
+        excel_filename_entry.pack()
+        create_button.pack()
+
+    yes_button = tk.Button(root, text="Evet", command=on_yes_button_click)
+    yes_button.place(relx=0.5, rely=0.5, anchor="center")
+    return yes_button
+
+
+def create_confirmation_label(root):
+    confirmation_label = tk.Label(
+        root, text="Reçeteyi başlıksız olarak kopyaladığınızdan emin misiniz?")
+    confirmation_label.place(relx=0.5, rely=0.3, anchor="center")
+    return confirmation_label
+
+
+def create_excel_filename_label(root):
+    excel_filename_label = tk.Label(root, text="Excel Dosyası Adı:")
+    return excel_filename_label
+
+
+def create_excel_filename_entry(root):
+    excel_filename_entry = tk.Entry(root)
+    return excel_filename_entry
+
+
+def create_create_button(root, create_excel):
+    create_button = tk.Button(root, text="Oluştur", command=create_excel)
+    # Başlangıçta düğmeyi devre dışı bırak
+    create_button.config(state="disabled")
+
+    def check_and_enable_button():
+        excel_filename = excel_filename_entry.get()
+        if not excel_filename:
+            create_button.config(state="disabled")
+        else:
+            create_button.config(state="normal")
+
+    excel_filename_entry.bind(
+        "<KeyRelease>", lambda event: check_and_enable_button())
+
+    return create_button
+
+
 # Tkinter penceresini oluştur
-root = tk.Tk()
-root.geometry("400x200")
-root.title("Excel Oluştur")
+root = create_root()
 
 # "Evet" düğmesi
-yes_button = tk.Button(root, text="Evet", command=lambda: [confirmation_label.pack_forget(
-), yes_button.pack_forget(), excel_filename_label.pack(), excel_filename_entry.pack(), create_button.pack()])
+yes_button = create_yes_button(root)
 
 # Kullanıcıya reçeteyi kopyaladığından emin mi diye sor
-confirmation_label = tk.Label(
-    root, text="Reçeteyi başlıksız olarak kopyaladığınızdan emin misiniz?")
-confirmation_label.pack()
+confirmation_label = create_confirmation_label(root)
 
 # Excel dosyasının adı için etiket
-excel_filename_label = tk.Label(root, text="Excel Dosyası Adı:")
+excel_filename_label = create_excel_filename_label(root)
 
 # Excel dosyası adı için giriş alanı
-excel_filename_entry = tk.Entry(root)
+excel_filename_entry = create_excel_filename_entry(root)
 
 # "Oluştur" düğmesi
-create_button = tk.Button(root, text="Oluştur", command=create_excel)
-
-# "Evet" düğmesini ekleyin
-yes_button.pack()
+create_button = create_create_button(root, create_excel)
 
 # Tkinter penceresini başlat
 root.mainloop()
