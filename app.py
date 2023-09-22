@@ -34,10 +34,13 @@ def add_border_to_range(worksheet, start_cell, end_cell):
     range_to_border = worksheet.Range(start_cell, end_cell)
     range_to_border.Borders.LineStyle = 1  # Kenarlık çizgilerini ince olarak ayarla
 
-
 # Excel dosyasını oluşturmak için fonksiyon
+# Excel dosyasını oluşturmak için fonksiyon
+
+
 def create_excel():
     excel_filename = excel_filename_entry.get()
+    excel_product_count = excel_product_count_entry.get()
     copied_text = root.clipboard_get()  # Kopyalanan metni al
 
     current_directory = os.getcwd()  # Python dosyasının bulunduğu dizin
@@ -56,6 +59,10 @@ def create_excel():
     worksheet.Range("A3:E3").HorizontalAlignment = -4108
     worksheet.Range("A3:E3").VerticalAlignment = -4108
     worksheet.Rows[2].RowHeight = 100  # 2. satırın yüksekliğini 100 yap
+
+    # Ürün adetini E2 hücresine yaz ve fontu kalın yap
+    worksheet.Cells(2, 5).Value = excel_product_count
+    worksheet.Cells(2, 5).Font.Bold = True
 
     # Başlık verilerini A3'den D3'e yerleştirin
     for col, header_text in enumerate(header, 1):
@@ -84,11 +91,18 @@ def create_excel():
                         # Kırmızı rengi temsil eden değer
                         worksheet.Cells(row, 2).Interior.Color = 255
                 elif col == 3:
-                    worksheet.Cells(row, 4).Value = value  # Hücreye değeri yaz
-                    worksheet.Cells(row, 4).NumberFormat = "0.00"
-
-                    if not value:
-                        # Kırmızı rengi temsil eden değer
+                    if value:
+                        # Eğer 'value' boş değilse işlem yap
+                        value_float = float(value.replace(",", "."))  # Virgülü nokta ile değiştirip ondalık sayıya çevir
+                        worksheet.Cells(row, 4).Value = value_float
+                        try:
+                            excel_product_count_float = float(excel_product_count.replace(",", "."))  # Virgülü nokta ile değiştirip ondalık sayıya çevir
+                            worksheet.Cells(row, 3).Value = value_float / excel_product_count_float
+                        except ValueError:
+                            pass
+                    else:
+                        # 'value' boşsa hata işleme veya başka bir işlem yapabilirsiniz
+                        worksheet.Cells(row, 3).Interior.Color = 255
                         worksheet.Cells(row, 4).Interior.Color = 255
                 elif col == 4:
                     worksheet.Cells(row, 5).Value = value  # Hücreye değeri yaz
@@ -111,13 +125,15 @@ def create_excel():
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
 
     # Giriş alanını ve düğmeyi kaldır
-    excel_filename_label.pack_forget()
-    excel_filename_entry.pack_forget()
-    create_button.pack_forget()
+    excel_filename_label.place_forget()
+    excel_filename_entry.place_forget()
+    excel_product_count_label.place_forget()
+    excel_product_count_entry.place_forget()
+    create_button.place_forget()
 
     # "Excel Oluşturuldu" yazısını göster
     excel_created_label = tk.Label(root, text="Excel dosyası oluşturuldu!")
-    excel_created_label.pack()
+    excel_created_label.place(relx=0.5, rely=0.7, anchor="center")
 
     # Programı 2 saniye sonra kapat
     root.after(1500, lambda: root.destroy())
@@ -125,18 +141,28 @@ def create_excel():
 
 def create_root():
     root = tk.Tk()
-    root.geometry("400x200")
+    window_width = 400
+    window_height = 200
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+
+    # Pencereyi ekranın ortasına konumlandır
+    x = (screen_width - window_width) // 2
+    y = (screen_height - window_height-150) // 2
+    root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
     root.title("Excel Oluştur")
     return root
-
 
 def create_yes_button(root):
     def on_yes_button_click():
         confirmation_label.destroy()
         yes_button.destroy()
-        excel_filename_label.pack()
-        excel_filename_entry.pack()
-        create_button.pack()
+        excel_filename_label.place(relx=0.5, rely=0.2, anchor="center")
+        excel_filename_entry.place(relx=0.5, rely=0.3, anchor="center")
+        excel_product_count_label.place(relx=0.5, rely=0.5, anchor="center")
+        excel_product_count_entry.place(relx=0.5, rely=0.6, anchor="center")
+        create_button.place(relx=0.5, rely=0.8, anchor="center")
 
     yes_button = tk.Button(root, text="Evet", command=on_yes_button_click)
     yes_button.place(relx=0.5, rely=0.5, anchor="center")
@@ -155,9 +181,19 @@ def create_excel_filename_label(root):
     return excel_filename_label
 
 
+def create_excel_product_count_label(root):
+    excel_product_count_label = tk.Label(root, text="Ürün Adeti:")
+    return excel_product_count_label
+
+
 def create_excel_filename_entry(root):
     excel_filename_entry = tk.Entry(root)
     return excel_filename_entry
+
+
+def create_excel_product_count_entry(root):
+    excel_product_count_entry = tk.Entry(root)
+    return excel_product_count_entry
 
 
 def create_create_button(root, create_excel):
@@ -165,15 +201,19 @@ def create_create_button(root, create_excel):
     # Başlangıçta düğmeyi devre dışı bırak
     create_button.config(state="disabled")
 
-    def check_and_enable_button():
+
+    def check_and_enable_button(event):
         excel_filename = excel_filename_entry.get()
-        if not excel_filename:
+        excel_product_count = excel_product_count_entry.get()
+        if not excel_filename or not excel_product_count:
             create_button.config(state="disabled")
         else:
             create_button.config(state="normal")
 
     excel_filename_entry.bind(
-        "<KeyRelease>", lambda event: check_and_enable_button())
+        "<KeyRelease>", check_and_enable_button)
+    excel_product_count_entry.bind(
+        "<KeyRelease>", check_and_enable_button)
 
     return create_button
 
@@ -190,8 +230,14 @@ confirmation_label = create_confirmation_label(root)
 # Excel dosyasının adı için etiket
 excel_filename_label = create_excel_filename_label(root)
 
+# Excel Ürün adeti labelı
+excel_product_count_label = create_excel_product_count_label(root)
+
 # Excel dosyası adı için giriş alanı
 excel_filename_entry = create_excel_filename_entry(root)
+
+# Excel Ürün adeti için giriş alanı
+excel_product_count_entry = create_excel_product_count_entry(root)
 
 # "Oluştur" düğmesi
 create_button = create_create_button(root, create_excel)
