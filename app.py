@@ -2,6 +2,8 @@ import tkinter as tk
 import win32com.client as win32
 import os
 import json
+from tkinter import ttk
+from ttkthemes import  ThemedTk
 # Excel application'ı başlat
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
@@ -204,57 +206,93 @@ def create_excelfn(copied_text):
     root.after(1500, lambda: root.destroy())
 
 def create_root():
-    root = tk.Tk()
-    window_width = 400
-    window_height = 250
+    root = ThemedTk(theme='adapta', themebg=True)
+    window_width = 600
+    window_height = 400
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
+    print(root.get_themes())
+    
+
+  
+    
 
     # Pencereyi ekranın ortasına konumlandır
     x = (screen_width - window_width) // 2
     y = (screen_height - window_height-150) // 2
     root.geometry(f"{window_width}x{window_height}+{x}+{y}")
     root.minsize(window_width, window_height)  # Minimum boyutu ayarla
+    # Ayarlar düğmesini oluştur
+    settings_button = ttk.Button(root, text="⚙️", command="toggle_settings")
 
-    root.title("Excel Oluştur")
+    # Ayarlar düğmesini ana pencereye yerleştir
+    settings_button.grid(row=0, column=1, padx=500, pady=10, sticky="e")
+
+    root.title("Mil Excel & Pdf Oluşturma")
     return root
 
 def create_warning_label(root):
-    warning_label = tk.Label(root, text="", fg="red")
+    # Kırmızı renkli bir stil oluştur
+    style = ttk.Style()
+    style.configure("Red.TLabel", foreground="red")
+    
+    # Stili uygulanan bir Label widget'ı oluştur
+    warning_label = ttk.Label(root, text="", style="Red.TLabel")
     warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
     return warning_label
 
 def create_approval_label(root):
-    approval_label = tk.Label(root, text="", fg="green")
+    # Yeşil renkli bir stil oluştur
+    style = ttk.Style()
+    style.configure("Green.TLabel", foreground="green")
+    
+    # Stili uygulanan bir Label widget'ı oluştur
+    approval_label = ttk.Label(root, text="", style="Green.TLabel")
     return approval_label
 
+def set_font_style():
+    style = ttk.Style()
+    style.configure("Custom.TLabel",font=(12))
+    return style
 def create_product_name_label(root):
-    product_name_label = tk.Label(root, text="Ürün Adı:")
+    style=set_font_style()
+    # Varsayılan stil ile bir Label widget'ı oluştur
+    product_name_label = ttk.Label(root, text="Ürün Adı:",style="Custom.TLabel")
+
     return product_name_label
 
 def create_order_number_label(root):
-    order_number_label = tk.Label(root, text="Sipariş Numarası:")
+    # Varsayılan stil ile bir Label widget'ı oluştur
+    style=set_font_style()
+
+    order_number_label = ttk.Label(root, text="Sipariş Numarası:",style="Custom.TLabel")
     return order_number_label
 
 def create_excel_product_count_label(root):
-    excel_product_count_label = tk.Label(root, text="Ürün Adeti:")
-    return excel_product_count_label
+    style=set_font_style()
 
+    # Varsayılan stil ile bir Label widget'ı oluştur
+    excel_product_count_label = ttk.Label(root, text="Ürün Adeti:",style="Custom.TLabel")
+    return excel_product_count_label
 def create_product_name_entry(root):
-    product_name_entry = tk.Entry(root)
+    product_name_entry = ttk.Entry(root)
     return product_name_entry
 
 def create_order_number_entry(root):
-    order_number_entry = tk.Entry(root)
+    order_number_entry = ttk.Entry(root)
     return order_number_entry
 def create_remove_sheet_metal_checkbox_entry(root):
     # "Sac Sil" butonuna tıklanıp tıklanmadığını takip eden değişken
     sac_sil_flag = tk.BooleanVar()
     sac_sil_flag.set(False)  # Başlangıçta "Sac Sil" butonu işaretsiz
-    remove_sheet_metal_checkbox = tk.Checkbutton(root, text="Sac Sil", variable=sac_sil_flag )
-    remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.6, anchor="center")
 
-    return remove_sheet_metal_checkbox , sac_sil_flag
+    style = ttk.Style()
+    style.configure("Custom.TCheckbutton", font=("Segoe UI", 12))  # Segoe UI fontu ve 12 punto olarak ayarla
+
+    remove_sheet_metal_checkbox = ttk.Checkbutton(
+        root, text="Sac Sil", variable=sac_sil_flag, style="Custom.TCheckbutton")
+
+    return remove_sheet_metal_checkbox, sac_sil_flag
 
 def create_excel_product_count_entry(root):
     def validate_input(P):
@@ -265,12 +303,15 @@ def create_excel_product_count_entry(root):
             return False
 
     vcmd = root.register(validate_input)
-    excel_product_count_entry = tk.Entry(
+    excel_product_count_entry = ttk.Entry(
         root, validate="key", validatecommand=(vcmd, "%P"))
     return excel_product_count_entry
 
 def create_create_button(root, create_excel):
-    create_button = tk.Button(root, text="Oluştur", command=create_excel)
+    
+    style = ttk.Style()
+    style.configure("Custom.TButton", font=("Segoe UI", 12))  # Segoe UI fontu ve 12 punto olarak ayarla
+    create_button = ttk.Button(root, text="Oluştur", command=create_excel, style="Custom.TButton")
     # Başlangıçta düğmeyi devre dışı bırak
     create_button.config(state="disabled")
 
@@ -325,13 +366,15 @@ create_button = create_create_button(root, create_excel)
 
 
 
-order_number_label.place(relx=0.5, rely=y, anchor="center")
-order_number_entry.place(relx=0.5, rely=y+0.1, anchor="center")
-product_name_label.place(relx=0.5, rely=y+0.2, anchor="center")
-product_name_entry.place(relx=0.5, rely=y+0.3, anchor="center")
-excel_product_count_label.place(relx=0.5, rely=y+0.4, anchor="center")
-excel_product_count_entry.place(relx=0.5, rely=y+0.5, anchor="center")
-create_button.place(relx=0.5, rely=y+0.7, anchor="center")
+order_number_label.place(relx=0.35, rely=y+0.1, anchor="center")
+order_number_entry.place(relx=0.6, rely=y+0.1, anchor="center")
+product_name_label.place(relx=0.4, rely=y+0.2, anchor="center")
+product_name_entry.place(relx=0.6, rely=y+0.2, anchor="center")
+excel_product_count_label.place(relx=0.39, rely=y+0.3, anchor="center")
+excel_product_count_entry.place(relx=0.6, rely=y+0.3, anchor="center")
+remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.425, anchor="center")
+
+create_button.place(relx=0.5, rely=y+0.55, anchor="center")
 
 # Tkinter penceresini başlat
 root.mainloop()
