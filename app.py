@@ -6,30 +6,39 @@ import os
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
 
-# A3'den E3'e kadar olan verileri bir diziye ekleyin
+# Sabitler
+EXCEL_BORDER_STYLE = 1
+EXCEL_TEXT_ALIGNMENT_CENTER = -4108
+EXCEL_HORIZONTAL_ALIGNMENT_LEFT = -4131
+EXCEL_VERTICAL_ALIGNMENT_CENTER = -4108
+EXCEL_HORIZONTAL_ALIGNMENT_CENTER = -4108
+
+# Excel başlık verileri
 header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
 
 # A2'de "Notlar" yazısını ekleyen fonksiyon
-
-y=0.2
+y = 0.2
 
 def add_notes_title(worksheet):
-    worksheet.Cells(2, 1).Value = "Notlar"  # Hücreye "Notlar" yazısı ekle
-    worksheet.Cells(2, 1).Font.Bold = True  # Yazıyı kalın yap
-    worksheet.Cells(2, 1).HorizontalAlignment = -4108  # Ortala hizala
-    worksheet.Cells(2, 4).Value = "Ürün Adeti"  # Hücreye "Notlar" yazısı ekle
-    worksheet.Cells(2, 4).Font.Bold = True  # Yazıyı kalın yap
-    worksheet.Cells(2, 4).HorizontalAlignment = -4108  # Ortala hizala
-    worksheet.Range("B2:C2").Merge()  # B2 ve C2 hücrelerini birleştir
+    worksheet_range = worksheet.Range
+    worksheet_cells = worksheet.Cells
+    
+    worksheet_cells(2, 1).Value = "Notlar"
+    worksheet_cells(2, 1).Font.Bold = True
+    worksheet_cells(2, 1).HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
+    
+    worksheet_cells(2, 4).Value = "Ürün Adeti"
+    worksheet_cells(2, 4).Font.Bold = True
+    worksheet_cells(2, 4).HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
+    
+    worksheet_range("B2:C2").Merge()
 
 # A3'den D'deki en son satıra kadar olan hücrelere kenarlık eklemek için fonksiyon
-
-
 def add_border_to_range(worksheet, start_cell, end_cell):
     range_to_border = worksheet.Range(start_cell, end_cell)
-    range_to_border.Borders.LineStyle = 1  # Kenarlık çizgilerini ince olarak ayarla
-
+    borders = range_to_border.Borders
+    borders.LineStyle = EXCEL_BORDER_STYLE
 
 def create_excel():
     try:
@@ -48,7 +57,6 @@ def create_excel():
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
         approval_label.place(relx=0.5, rely=y+0.2, anchor="center")
 
-
 # Excel dosyasını oluşturmak için fonksiyon
 def create_excelfn(copied_text):
     product_name = product_name_entry.get()
@@ -64,16 +72,13 @@ def create_excelfn(copied_text):
     # Excel dosyasını oluştur
     workbook = excel.Workbooks.Add()
     worksheet = workbook.Worksheets(1)
-    worksheet.Range("A:E").VerticalAlignment = -4108  # Dikeyde ortala
-    worksheet.Range("A:B").HorizontalAlignment = -4108  # A kolonunu ortala
-    worksheet.Range("B:C").HorizontalAlignment = - \
-        4131  # B kolonunu sola dayalı
-    worksheet.Range("C:D").HorizontalAlignment = - \
-        4108  # C kolonunu ortala
-    worksheet.Range("D:E").HorizontalAlignment = - \
-        4108  # A kolonunu ortala hizala
-    worksheet.Range("A3:E3").HorizontalAlignment = -4108
-    worksheet.Range("A3:E3").VerticalAlignment = -4108
+    worksheet.Range("A:E").VerticalAlignment = EXCEL_VERTICAL_ALIGNMENT_CENTER
+    worksheet.Range("A:B").HorizontalAlignment = EXCEL_HORIZONTAL_ALIGNMENT_CENTER
+    worksheet.Range("B:C").HorizontalAlignment = EXCEL_HORIZONTAL_ALIGNMENT_LEFT
+    worksheet.Range("C:D").HorizontalAlignment = EXCEL_HORIZONTAL_ALIGNMENT_CENTER
+    worksheet.Range("D:E").HorizontalAlignment = EXCEL_HORIZONTAL_ALIGNMENT_CENTER
+    worksheet.Range("A3:E3").HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
+    worksheet.Range("A3:E3").VerticalAlignment = EXCEL_VERTICAL_ALIGNMENT_CENTER
     worksheet.Rows[2].RowHeight = 100  # 2. satırın yüksekliğini 100 yap
 
     # Ürün adetini E2 hücresine yaz ve fontu kalın yap
@@ -90,12 +95,13 @@ def create_excelfn(copied_text):
     worksheet.Range("A1:E1").Merge()
     worksheet.Range("A1").Value = order_name+" "+product_name 
     worksheet.Range("A1").Font.Bold = True
-    worksheet.Range("A1").HorizontalAlignment = -4108  # Ortala hizala
+    worksheet.Range("A1").HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
 
-    # Kopyalanan metni satır satır Excel'e ekleyin, A4 hücresinden başlayarak
+    # Metni bir defada parçalayarak işleme
     row = 4  # Başlangıç satırı
-    for line in copied_text.split("\n"):  # Kopyalanan metni satıra göre ayır
-        values = line.split("\t")  # Satırdaki değerleri tab ile ayır
+    lines = copied_text.split("\n")
+    for line in lines:
+        values = line.split("\t") # Satırdaki değerleri tab ile ayır
         col = 1  # Başlangıç sütunu
 
         for value in values:  # Satırdaki her değer için
@@ -163,7 +169,6 @@ def create_excelfn(copied_text):
     # Programı 2 saniye sonra kapat
     root.after(1500, lambda: root.destroy())
 
-
 def create_root():
     root = tk.Tk()
     window_width = 400
@@ -180,42 +185,34 @@ def create_root():
     root.title("Excel Oluştur")
     return root
 
-
 def create_warning_label(root):
     warning_label = tk.Label(root, text="", fg="red")
     warning_label.place(relx=0.5, rely=y+0.60, anchor="center")
     return warning_label
 
-
 def create_approval_label(root):
     approval_label = tk.Label(root, text="", fg="green")
     return approval_label
-
 
 def create_product_name_label(root):
     product_name_label = tk.Label(root, text="Ürün Adı:")
     return product_name_label
 
-
 def create_order_number_label(root):
     order_number_label = tk.Label(root, text="Sipariş Numarası:")
     return order_number_label
-
 
 def create_excel_product_count_label(root):
     excel_product_count_label = tk.Label(root, text="Ürün Adeti:")
     return excel_product_count_label
 
-
 def create_product_name_entry(root):
     product_name_entry = tk.Entry(root)
     return product_name_entry
 
-
 def create_order_number_entry(root):
     order_number_entry = tk.Entry(root)
     return order_number_entry
-
 
 def create_excel_product_count_entry(root):
     def validate_input(P):
@@ -230,7 +227,6 @@ def create_excel_product_count_entry(root):
         root, validate="key", validatecommand=(vcmd, "%P"))
     return excel_product_count_entry
 
-
 def create_create_button(root, create_excel):
     create_button = tk.Button(root, text="Oluştur", command=create_excel)
     # Başlangıçta düğmeyi devre dışı bırak
@@ -240,7 +236,7 @@ def create_create_button(root, create_excel):
         product_name = product_name_entry.get()
         order_number = order_number_entry.get()
         excel_product_count = excel_product_count_entry.get()
-        if  not order_number or not product_name or not excel_product_count :
+        if not order_number or not product_name or not excel_product_count:
             create_button.config(state="disabled")
         else:
             create_button.config(state="normal")
@@ -250,13 +246,11 @@ def create_create_button(root, create_excel):
         "<KeyRelease>", check_and_enable_button)
     excel_product_count_entry.bind(
         "<KeyRelease>", check_and_enable_button)
-   
-    return create_button
 
+    return create_button
 
 # Tkinter penceresini oluştur
 root = create_root()
-
 
 # Uyarı etiketleri
 warning_label = create_warning_label(root)
@@ -273,6 +267,7 @@ excel_product_count_label = create_excel_product_count_label(root)
 
 # Sipariş numarası için giriş alanı
 order_number_entry = create_order_number_entry(root)
+order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
 
 # Excel dosyası adı için
 product_name_entry = create_product_name_entry(root)
