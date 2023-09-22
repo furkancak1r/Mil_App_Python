@@ -1,7 +1,7 @@
 import tkinter as tk
 import win32com.client as win32
 import os
-
+import json
 # Excel application'ı başlat
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
@@ -17,8 +17,8 @@ EXCEL_HORIZONTAL_ALIGNMENT_CENTER = -4108
 header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
 
-# A2'de "Notlar" yazısını ekleyen fonksiyon
 y = 0.2
+# A2'de "Notlar" yazısını ekleyen fonksiyon
 
 def add_notes_title(worksheet):
     worksheet_range = worksheet.Range
@@ -40,6 +40,35 @@ def add_border_to_range(worksheet, start_cell, end_cell):
     borders = range_to_border.Borders
     borders.LineStyle = EXCEL_BORDER_STYLE
 
+
+def load_words_to_remove(file_path):
+ 
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+        return data["words_to_remove"]
+    
+def remove_selected_words(data):
+   
+    # Belirtilen kelimeleri büyük harfe çevir
+    words_to_remove = load_words_to_remove('milJsonFiles/sacSil.json')
+    words_to_remove = [word.upper() for word in words_to_remove]
+    
+    # Veriyi satırlara böler
+    lines = data.split("\n")
+    
+    # Temizlenmiş veriyi saklamak için bir liste oluştur
+    cleaned_data = []
+    
+    # Satırları dolaş
+    for line in lines:
+        # Varsa kelimeleri kaldır
+        if not any(word in line.upper() for word in words_to_remove):
+            cleaned_data.append(line)
+    
+    # Temizlenmiş veriyi birleştir ve döndür
+    return "\n".join(cleaned_data)
+
+
 def create_excel():
     try:
         copied_text = root.clipboard_get()  # Kopyalanan metni al
@@ -51,9 +80,13 @@ def create_excel():
     else:
         warning_label.destroy()  # Label'ı kaldır
         approval_label.config(text="Excel oluşturuluyor...")
-        approval_label.place(relx=0.5, rely=y+0.60, anchor="center")
+        approval_label.place(relx=0.5, rely=y-0.1, anchor="center")
         root.update()  # Arayüzü güncelle
-        create_excelfn(copied_text)  # Excel oluştur
+        if sac_sil_flag.get(): # Eğer sac sil seçiliyse
+            cleaned_text = remove_selected_words(copied_text) # Kopyalanan metinden belirtilen kelimeleri sil
+            create_excelfn(cleaned_text) # Temizlenmiş veri ile Excel oluştur
+        else: # Eğer sac sil seçili değilse
+            create_excelfn(copied_text) # Kopyalanan metni olduğu gibi Excel'e yaz
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
         approval_label.place(relx=0.5, rely=y+0.2, anchor="center")
 
@@ -164,6 +197,7 @@ def create_excelfn(copied_text):
     order_number_entry.place_forget()
     excel_product_count_label.place_forget()
     excel_product_count_entry.place_forget()
+    remove_sheet_metal_checkbox.place_forget()
     create_button.place_forget()
 
     # Programı 2 saniye sonra kapat
@@ -187,7 +221,7 @@ def create_root():
 
 def create_warning_label(root):
     warning_label = tk.Label(root, text="", fg="red")
-    warning_label.place(relx=0.5, rely=y+0.60, anchor="center")
+    warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
     return warning_label
 
 def create_approval_label(root):
@@ -213,6 +247,14 @@ def create_product_name_entry(root):
 def create_order_number_entry(root):
     order_number_entry = tk.Entry(root)
     return order_number_entry
+def create_remove_sheet_metal_checkbox_entry(root):
+    # "Sac Sil" butonuna tıklanıp tıklanmadığını takip eden değişken
+    sac_sil_flag = tk.BooleanVar()
+    sac_sil_flag.set(False)  # Başlangıçta "Sac Sil" butonu işaretsiz
+    remove_sheet_metal_checkbox = tk.Checkbutton(root, text="Sac Sil", variable=sac_sil_flag )
+    remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.6, anchor="center")
+
+    return remove_sheet_metal_checkbox , sac_sil_flag
 
 def create_excel_product_count_entry(root):
     def validate_input(P):
@@ -275,8 +317,14 @@ product_name_entry = create_product_name_entry(root)
 # Excel Ürün adeti için giriş alanı
 excel_product_count_entry = create_excel_product_count_entry(root)
 
+# "Sac Sil" butonunu ve durumunu al
+remove_sheet_metal_checkbox, sac_sil_flag = create_remove_sheet_metal_checkbox_entry(root)
+
 # "Oluştur" düğmesi
 create_button = create_create_button(root, create_excel)
+
+
+
 order_number_label.place(relx=0.5, rely=y, anchor="center")
 order_number_entry.place(relx=0.5, rely=y+0.1, anchor="center")
 product_name_label.place(relx=0.5, rely=y+0.2, anchor="center")
