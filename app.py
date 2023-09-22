@@ -12,6 +12,7 @@ header = ["Malzeme Kodu", "Malzeme Açıklaması",
 
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
+y=0.2
 
 def add_notes_title(worksheet):
     worksheet.Cells(2, 1).Value = "Notlar"  # Hücreye "Notlar" yazısı ekle
@@ -41,21 +42,24 @@ def create_excel():
     else:
         warning_label.destroy()  # Label'ı kaldır
         approval_label.config(text="Excel oluşturuluyor...")
-        approval_label.place(relx=0.5, rely=0.72, anchor="center")
+        approval_label.place(relx=0.5, rely=y+0.60, anchor="center")
         root.update()  # Arayüzü güncelle
         create_excelfn(copied_text)  # Excel oluştur
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
-        approval_label.place(relx=0.5, rely=0.4, anchor="center")
+        approval_label.place(relx=0.5, rely=y+0.2, anchor="center")
 
 
 # Excel dosyasını oluşturmak için fonksiyon
 def create_excelfn(copied_text):
-    excel_filename = excel_filename_entry.get()
+    product_name = product_name_entry.get()
+    order_name = order_number_entry.get()
+
     excel_product_count = excel_product_count_entry.get()
 
     current_directory = os.getcwd()  # Python dosyasının bulunduğu dizin
-    excel_file_path = os.path.join(
-        current_directory, excel_filename)  # Excel dosyasının tam yolu
+    os.mkdir(os.path.join(current_directory, order_name)) # Klasörü oluşturur
+
+    excel_file_path = os.path.join(current_directory, order_name, order_name+" "+product_name) # Excel dosyasının tam yolu
 
     # Excel dosyasını oluştur
     workbook = excel.Workbooks.Add()
@@ -84,7 +88,7 @@ def create_excelfn(copied_text):
 
     # A ve E sütunlarını birleştir ve Excel dosya adını içeren hücreyi oluştur
     worksheet.Range("A1:E1").Merge()
-    worksheet.Range("A1").Value = excel_filename
+    worksheet.Range("A1").Value = order_name+" "+product_name 
     worksheet.Range("A1").Font.Bold = True
     worksheet.Range("A1").HorizontalAlignment = -4108  # Ortala hizala
 
@@ -148,8 +152,10 @@ def create_excelfn(copied_text):
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
 
     # Giriş alanını ve düğmeyi kaldır
-    excel_filename_label.place_forget()
-    excel_filename_entry.place_forget()
+    product_name_label.place_forget()
+    product_name_entry.place_forget()
+    order_number_label.place_forget()
+    order_number_entry.place_forget()
     excel_product_count_label.place_forget()
     excel_product_count_entry.place_forget()
     create_button.place_forget()
@@ -161,7 +167,7 @@ def create_excelfn(copied_text):
 def create_root():
     root = tk.Tk()
     window_width = 400
-    window_height = 200
+    window_height = 250
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
@@ -177,7 +183,7 @@ def create_root():
 
 def create_warning_label(root):
     warning_label = tk.Label(root, text="", fg="red")
-    warning_label.place(relx=0.5, rely=0.72, anchor="center")
+    warning_label.place(relx=0.5, rely=y+0.60, anchor="center")
     return warning_label
 
 
@@ -186,9 +192,14 @@ def create_approval_label(root):
     return approval_label
 
 
-def create_excel_filename_label(root):
-    excel_filename_label = tk.Label(root, text="Excel Dosya Adı:")
-    return excel_filename_label
+def create_product_name_label(root):
+    product_name_label = tk.Label(root, text="Ürün Adı:")
+    return product_name_label
+
+
+def create_order_number_label(root):
+    order_number_label = tk.Label(root, text="Sipariş Numarası:")
+    return order_number_label
 
 
 def create_excel_product_count_label(root):
@@ -196,9 +207,14 @@ def create_excel_product_count_label(root):
     return excel_product_count_label
 
 
-def create_excel_filename_entry(root):
-    excel_filename_entry = tk.Entry(root)
-    return excel_filename_entry
+def create_product_name_entry(root):
+    product_name_entry = tk.Entry(root)
+    return product_name_entry
+
+
+def create_order_number_entry(root):
+    order_number_entry = tk.Entry(root)
+    return order_number_entry
 
 
 def create_excel_product_count_entry(root):
@@ -221,18 +237,20 @@ def create_create_button(root, create_excel):
     create_button.config(state="disabled")
 
     def check_and_enable_button(event):
-        excel_filename = excel_filename_entry.get()
+        product_name = product_name_entry.get()
+        order_number = order_number_entry.get()
         excel_product_count = excel_product_count_entry.get()
-        if not excel_filename or not excel_product_count:
+        if  not order_number or not product_name or not excel_product_count :
             create_button.config(state="disabled")
         else:
             create_button.config(state="normal")
-
-    excel_filename_entry.bind(
+    order_number_entry.bind(
+        "<KeyRelease>", check_and_enable_button)
+    product_name_entry.bind(
         "<KeyRelease>", check_and_enable_button)
     excel_product_count_entry.bind(
         "<KeyRelease>", check_and_enable_button)
-
+   
     return create_button
 
 
@@ -244,27 +262,33 @@ root = create_root()
 warning_label = create_warning_label(root)
 approval_label = create_approval_label(root)
 
+# Sipariş numarası için etiket
+order_number_label = create_order_number_label(root)
 
-# Excel dosyasının adı için etiket
-excel_filename_label = create_excel_filename_label(root)
+# Ürün adı için etiket
+product_name_label = create_product_name_label(root)
 
 # Excel Ürün adeti labelı
 excel_product_count_label = create_excel_product_count_label(root)
 
+# Sipariş numarası için giriş alanı
+order_number_entry = create_order_number_entry(root)
+
 # Excel dosyası adı için
-excel_filename_entry = create_excel_filename_entry(root)
+product_name_entry = create_product_name_entry(root)
 
 # Excel Ürün adeti için giriş alanı
 excel_product_count_entry = create_excel_product_count_entry(root)
 
 # "Oluştur" düğmesi
 create_button = create_create_button(root, create_excel)
-
-excel_filename_label.place(relx=0.5, rely=0.2, anchor="center")
-excel_filename_entry.place(relx=0.5, rely=0.3, anchor="center")
-excel_product_count_label.place(relx=0.5, rely=0.5, anchor="center")
-excel_product_count_entry.place(relx=0.5, rely=0.6, anchor="center")
-create_button.place(relx=0.5, rely=0.85, anchor="center")
+order_number_label.place(relx=0.5, rely=y, anchor="center")
+order_number_entry.place(relx=0.5, rely=y+0.1, anchor="center")
+product_name_label.place(relx=0.5, rely=y+0.2, anchor="center")
+product_name_entry.place(relx=0.5, rely=y+0.3, anchor="center")
+excel_product_count_label.place(relx=0.5, rely=y+0.4, anchor="center")
+excel_product_count_entry.place(relx=0.5, rely=y+0.5, anchor="center")
+create_button.place(relx=0.5, rely=y+0.7, anchor="center")
 
 # Tkinter penceresini başlat
 root.mainloop()
