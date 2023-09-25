@@ -4,7 +4,7 @@ import os
 import json
 from tkinter import ttk
 from ttkthemes import ThemedTk
-import re
+
 # Excel application'ı başlat
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
@@ -87,6 +87,30 @@ def validate_copied_text(copied_text):
     # Sekme sayısı 2'den fazla ve belirli kelime varsa True, aksi takdirde False döndür
     return tab_count > 2 and word_here
 
+# Verileri alıp renklerine göre sıralayıp sıralanmış verileri dönen fonksiyon
+# Verileri alıp istediğiniz sıralamaya göre sıralayıp sıralanmış verileri dönen fonksiyon
+def sort_data_by_color(data):
+  
+  # İstenen sıralama
+  order = ["8696052", "11992832", "65535", "13408767", "14395790", "9359529", "10092441",""]
+  
+  # Verileri satırlara böl (boş satırları atla)
+  lines = data.splitlines()
+    
+  # Her satır için son sütunun değerini bul
+  values = [line.split("\t")[-1] for line in lines]
+
+  # Değerleri istenen sıralamaya göre indeksle
+  indices = [order.index(value) for value in values]
+
+  # Satırları indekslere göre sırala
+  sorted_lines = [line for _, line in sorted(zip(indices, lines))]
+
+  # Sıralanmış verileri birleştir
+  sorted_data = "\n".join(sorted_lines)
+  # Sıralanmış verileri döndür
+  return sorted_data
+
 
 def apply_colors(text):
     response = fetch_json_data('milJsonFiles/renkler.json')
@@ -118,8 +142,9 @@ def apply_colors(text):
 
         formatted_line = values
         result.append("\t".join(formatted_line))
-
-    return "\n".join(result)
+    result_excel_format = "\n".join(result)  
+    sorted_data_by_color= sort_data_by_color(result_excel_format)
+    return sorted_data_by_color
 
 
 def create_excel():
@@ -141,12 +166,15 @@ def create_excel():
     else:
         warning_label.destroy()  # Label'ı kaldır
         approval_label.config(text="Excel oluşturuluyor...")
+        create_button.config(state="disabled")
         approval_label.place(relx=0.5, rely=y-0.1, anchor="center")
         root.update()  # Arayüzü güncelle
         if sac_sil_flag.get():  # Eğer sac sil seçiliyse
             # Kopyalanan metinden belirtilen kelimeleri sil
             cleaned_text = remove_selected_words(copied_text)
-            create_excelfn(cleaned_text)  # Temizlenmiş veri ile Excel oluştur
+            result = apply_colors(cleaned_text)
+
+            create_excelfn(result)  # Temizlenmiş veri ile Excel oluştur
         else:  # Eğer sac sil seçili değilse
             # Kopyalanan metni olduğu gibi Excel'e yaz
             # Veriyi temizle
@@ -250,7 +278,10 @@ def create_excelfn(copied_text):
                         # Kırmızı rengi temsil eden değer
                         worksheet.Cells(row, 5).Interior.Color = 255
                 elif col == 5:
-                    worksheet.Cells(row, 6).Value = value  # Hücreye değeri yaz
+                    #worksheet.Cells(row, 6).Value = value  # Hücreye değeri yaz
+                    if value:
+                        worksheet.Cells(row, 2).Interior.Color = value
+
 
                 col += 1  # Sütunu bir artır
         # Bir sonraki satıra geçmeden önce kontrol et
@@ -258,7 +289,7 @@ def create_excelfn(copied_text):
             row += 1  # Satırı bir artır
 
     # A3'den D'deki en son satıra kadar olan hücrelere kenarlık ekleyin
-    add_border_to_range(worksheet, "A1", "E" + str(row - 2))
+    add_border_to_range(worksheet, "A1", "E" + str(row - 1))
     worksheet.Columns.AutoFit()
 
     # A2'de "Notlar" yazısını ekleyin
