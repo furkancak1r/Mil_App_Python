@@ -4,6 +4,7 @@ import os
 import json
 from tkinter import ttk
 from ttkthemes import ThemedTk
+import re
 # Excel application'ı başlat
 excel = win32.gencache.EnsureDispatch('Excel.Application')
 excel.Visible = True  # Excel penceresini görünür yap
@@ -81,10 +82,48 @@ def validate_copied_text(copied_text):
     lowercase_text = copied_text.lower()  # Metni küçük harfe çevir
     # Belirli kelimeleri metinde küçük harfle ara
     word_here = any(word in lowercase_text for word in [
-                    "adet", "kg", "pk", "mt", "metre","takım"])
+                    "adet", "kg", "pk", "mt", "metre", "takım"])
     # Sekme sayısı 2'den fazla ve belirli kelime varsa True, aksi takdirde False döndür
     return tab_count > 2 and word_here
 
+def apply_colors(text):
+    colors = {
+        "rgb(244, 176, 132)": ["orfis", "kangal", "kılcal", "exp", "valf", "evaporat"],
+        "rgb(0, 255, 182)": ["kondenser", "kompresör", "izolasyon", "klima", "bakır tel", "bas-sw", "likit", "dray", "gaz", "gözet-cam", "subap"],
+        "rgb(255, 255, 0)": ["dixell", "işlemci", "kontrol cihazı", "kablo", "klem", "swich", "otomat", "sigorta", "kontaktör", "rezistans", "kumanda", "prob", "eliwell", "adapt", "fiş", "priz", "röle", "termometre"],
+        "rgb(255, 153, 204)": ["kanop", "stickled", "led"],
+        "rgb(142, 169, 219)": ["profil", "eloksallı"],
+        "rgb(169, 208, 142)": ["cam", "ayna", "çerçeve", "kapı", "lex", "ol-takım"],
+        "rgb(153, 255, 153)": ["fan"]
+    }
+    result = []
+
+    lines = text.split("\n")
+
+    for line in lines:
+        values = line.split("\t")
+        formatted_line = []
+
+        if len(values) >= 4:  # En az 4 değeri olan satırları işle
+            keyword_to_search = values[1].lower()  # 1. değeri al (arasın kelime) ve küçük harfe çevir
+            rgb_color = ""  # Varsayılan olarak boş renk
+
+            for color, keywords in colors.items():
+                for keyword in keywords:
+                    # Anahtar kelimeleri - ile böl
+                    parts = keyword.lower().split("-")
+                    # Bölünen parçaların hepsinin values[1]'de olup olmadığını kontrol et
+                    if all(part in keyword_to_search for part in parts):
+                        rgb_color = color
+                        break
+
+            # 4. değeri eklemek
+            values.append(rgb_color)
+
+        formatted_line = values
+        result.append("\t".join(formatted_line))
+
+    return "\n".join(result)
 
 def create_excel():
     try:
@@ -94,9 +133,12 @@ def create_excel():
 
     if not copied_text:
         warning_label.config(text="Lütfen ürünleri kopyalayın!")
+        warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
 
     if not validate_copied_text(copied_text):
         warning_label.config(text="Yanlış içerik kopyalanmış!")
+        warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
+
         return
 
     else:
@@ -110,7 +152,11 @@ def create_excel():
             create_excelfn(cleaned_text)  # Temizlenmiş veri ile Excel oluştur
         else:  # Eğer sac sil seçili değilse
             # Kopyalanan metni olduğu gibi Excel'e yaz
-            create_excelfn(copied_text)
+            # Veriyi temizle
+            result=apply_colors(copied_text)
+            # Yeni veriyi kopyala
+            print(result)
+            create_excelfn(result)
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
         approval_label.place(relx=0.5, rely=y+0.2, anchor="center")
 
@@ -165,8 +211,10 @@ def create_excelfn(copied_text):
     # Metni bir defada parçalayarak işleme
     row = 4  # Başlangıç satırı
     lines = copied_text.split("\n")
+    #print("lines:",lines)
     for line in lines:
         values = line.split("\t")  # Satırdaki değerleri tab ile ayır
+        print("values:",values)
         col = 1  # Başlangıç sütunu
 
         for value in values:  # Satırdaki her değer için
@@ -207,6 +255,9 @@ def create_excelfn(copied_text):
                     if not value:
                         # Kırmızı rengi temsil eden değer
                         worksheet.Cells(row, 5).Interior.Color = 255
+                elif col == 5:
+                    worksheet.Cells(row, 6).Value = value  # Hücreye değeri yaz
+                                          
 
                 col += 1  # Sütunu bir artır
         # Bir sonraki satıra geçmeden önce kontrol et
@@ -222,7 +273,13 @@ def create_excelfn(copied_text):
 
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
 
-    # Giriş alanını ve düğmeyi kaldır
+    forget()
+
+    # Programı 2 saniye sonra kapat
+    root.after(1500, lambda: root.destroy())
+
+
+def forget():
     product_name_label.place_forget()
     product_name_entry.place_forget()
     order_number_label.place_forget()
@@ -231,9 +288,9 @@ def create_excelfn(copied_text):
     excel_product_count_entry.place_forget()
     remove_sheet_metal_checkbox.place_forget()
     create_button.place_forget()
-
-    # Programı 2 saniye sonra kapat
-    root.after(1500, lambda: root.destroy())
+    settings_button.place_forget()
+    colors_button.place_forget()
+    sheet_remove_button.place_forget()
 
 
 def create_root():
@@ -242,17 +299,13 @@ def create_root():
     window_height = 400
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
+    root.resizable(False, False)
 
     # Pencereyi ekranın ortasına konumlandır
     x = (screen_width - window_width) // 2
     y = (screen_height - window_height-150) // 2
     root.geometry(f"{window_width}x{window_height}+{x}+{y}")
     root.minsize(window_width, window_height)  # Minimum boyutu ayarla
-    # Ayarlar düğmesini oluştur
-    settings_button = ttk.Button(root, text="⚙️", command="toggle_settings")
-
-    # Ayarlar düğmesini ana pencereye yerleştir
-    settings_button.grid(row=0, column=1, padx=500, pady=10, sticky="e")
 
     root.title("Mil Excel & Pdf Oluşturma")
     return root
@@ -265,8 +318,69 @@ def create_warning_label(root):
 
     # Stili uygulanan bir Label widget'ı oluştur
     warning_label = ttk.Label(root, text="", style="Red.TLabel")
-    warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
     return warning_label
+
+
+def handle_home_button():
+    home_button.place_forget()
+    place()
+    settings_button.place(relx=0.9, rely=y-0.1, anchor="center")
+    colors_button.place_forget()
+    sheet_remove_button.place_forget()
+    settings_label.place_forget()
+
+
+def create_home_button(root):
+    home_button = ttk.Button(root, text="🏠", command=handle_home_button)
+    return home_button
+
+
+def handle_settings_button():
+    forget()
+    # home düğmesini oluştur
+    home_button.place(relx=0.9, rely=y-0.1, anchor="center")
+
+    settings_label.place(relx=0.52, rely=y+0.1, anchor="center")
+    sheet_remove_button.place(relx=0.4, rely=y+0.3, anchor="center")
+    colors_button.place(relx=0.65, rely=y+0.3, anchor="center")
+
+
+def create_settings_button(root):
+
+    # Ayarlar düğmesini oluştur
+    settings_button = ttk.Button(
+        root, text="⚙️", command=handle_settings_button)
+    # Ayarlar düğmesini ana pencereye yerleştir
+    return settings_button
+
+
+def handle_sheet_remove_button():
+    # "Sac Sil" düğmesine tıklandığında yapılacak işlemler
+    pass
+
+
+def create_sheet_remove_button(root):
+    style = ttk.Style()
+    # Segoe UI fontu ve 12 punto olarak ayarla
+    style.configure("Custom.TButton", font=("Segoe UI", 12))
+
+    sheet_remove_button = ttk.Button(
+        root, text="Sac Silme", command=handle_sheet_remove_button, style="Custom.TButton")
+    return sheet_remove_button
+
+
+def handle_colors_button():
+    # "Colors" düğmesine tıklandığında yapılacak işlemler
+    pass
+
+
+def create_colors_button(root):
+    style = ttk.Style()
+    # Segoe UI fontu ve 12 punto olarak ayarla
+    style.configure("Custom.TButton", font=("Segoe UI", 12))
+    colors_button = ttk.Button(
+        root, text="Renk", command=handle_colors_button, style="Custom.TButton")
+    return colors_button
 
 
 def create_approval_label(root):
@@ -379,6 +493,15 @@ def create_create_button(root, create_excel):
     return create_button
 
 
+def create_settings_label(root):
+    # Özel stil ile bir Label widget'ı oluştur
+    style = ttk.Style()
+    style.configure("b.TLabel", font=("Segoe UI", 18))
+
+    settings_label = ttk.Label(root, text="Ayarlar", style="b.TLabel")
+    return settings_label
+
+
 # Tkinter penceresini oluştur
 root = create_root()
 
@@ -412,16 +535,32 @@ remove_sheet_metal_checkbox, sac_sil_flag = create_remove_sheet_metal_checkbox_e
 # "Oluştur" düğmesi
 create_button = create_create_button(root, create_excel)
 
+settings_button = create_settings_button(root)
+home_button = create_home_button(root)
 
-order_number_label.place(relx=0.35, rely=y+0.1, anchor="center")
-order_number_entry.place(relx=0.6, rely=y+0.1, anchor="center")
-product_name_label.place(relx=0.4, rely=y+0.2, anchor="center")
-product_name_entry.place(relx=0.6, rely=y+0.2, anchor="center")
-excel_product_count_label.place(relx=0.39, rely=y+0.3, anchor="center")
-excel_product_count_entry.place(relx=0.6, rely=y+0.3, anchor="center")
-remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.425, anchor="center")
+# Ayarlar etkieti
+settings_label = create_settings_label(root)
 
-create_button.place(relx=0.5, rely=y+0.55, anchor="center")
+# Renkler Butonu
+colors_button = create_colors_button(root)
+# Sac sil butonu
+sheet_remove_button = create_sheet_remove_button(root)
 
+
+def place():
+
+    order_number_label.place(relx=0.35, rely=y+0.1, anchor="center")
+    order_number_entry.place(relx=0.6, rely=y+0.1, anchor="center")
+    product_name_label.place(relx=0.4, rely=y+0.2, anchor="center")
+    product_name_entry.place(relx=0.6, rely=y+0.2, anchor="center")
+    excel_product_count_label.place(relx=0.39, rely=y+0.3, anchor="center")
+    excel_product_count_entry.place(relx=0.6, rely=y+0.3, anchor="center")
+    remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.425, anchor="center")
+    create_button.place(relx=0.5, rely=y+0.55, anchor="center")
+    settings_button.place(relx=0.9, rely=y-0.1, anchor="center")
+    root.update()
+
+
+place()
 # Tkinter penceresini başlat
 root.mainloop()
