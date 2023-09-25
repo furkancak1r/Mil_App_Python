@@ -47,17 +47,18 @@ def add_border_to_range(worksheet, start_cell, end_cell):
     borders.LineStyle = EXCEL_BORDER_STYLE
 
 
-def load_words_to_remove(file_path):
+def fetch_json_data(file_path):
 
     with open(file_path, 'r') as file:
         data = json.load(file)
-        return data["words_to_remove"]
+        return data
 
 
 def remove_selected_words(data):
 
     # Belirtilen kelimeleri büyük harfe çevir
-    words_to_remove = load_words_to_remove('milJsonFiles/sacSil.json')
+    response = fetch_json_data('milJsonFiles/sacSil.json')
+    words_to_remove = response["words_to_remove"]
     words_to_remove = [word.upper() for word in words_to_remove]
 
     # Veriyi satırlara böler
@@ -86,16 +87,10 @@ def validate_copied_text(copied_text):
     # Sekme sayısı 2'den fazla ve belirli kelime varsa True, aksi takdirde False döndür
     return tab_count > 2 and word_here
 
+
 def apply_colors(text):
-    colors = {
-        "rgb(244, 176, 132)": ["orfis", "kangal", "kılcal", "exp", "valf", "evaporat"],
-        "rgb(0, 255, 182)": ["kondenser", "kompresör", "izolasyon", "klima", "bakır tel", "bas-sw", "likit", "dray", "gaz", "gözet-cam", "subap"],
-        "rgb(255, 255, 0)": ["dixell", "işlemci", "kontrol cihazı", "kablo", "klem", "swich", "otomat", "sigorta", "kontaktör", "rezistans", "kumanda", "prob", "eliwell", "adapt", "fiş", "priz", "röle", "termometre"],
-        "rgb(255, 153, 204)": ["kanop", "stickled", "led"],
-        "rgb(142, 169, 219)": ["profil", "eloksallı"],
-        "rgb(169, 208, 142)": ["cam", "ayna", "çerçeve", "kapı", "lex", "ol-takım"],
-        "rgb(153, 255, 153)": ["fan"]
-    }
+    response = fetch_json_data('milJsonFiles/renkler.json')
+    colors = response["colors"]
     result = []
 
     lines = text.split("\n")
@@ -105,7 +100,8 @@ def apply_colors(text):
         formatted_line = []
 
         if len(values) >= 4:  # En az 4 değeri olan satırları işle
-            keyword_to_search = values[1].lower()  # 1. değeri al (arasın kelime) ve küçük harfe çevir
+            # 1. değeri al (arasın kelime) ve küçük harfe çevir
+            keyword_to_search = values[1].lower()
             rgb_color = ""  # Varsayılan olarak boş renk
 
             for color, keywords in colors.items():
@@ -124,6 +120,7 @@ def apply_colors(text):
         result.append("\t".join(formatted_line))
 
     return "\n".join(result)
+
 
 def create_excel():
     try:
@@ -153,9 +150,8 @@ def create_excel():
         else:  # Eğer sac sil seçili değilse
             # Kopyalanan metni olduğu gibi Excel'e yaz
             # Veriyi temizle
-            result=apply_colors(copied_text)
+            result = apply_colors(copied_text)
             # Yeni veriyi kopyala
-            print(result)
             create_excelfn(result)
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
         approval_label.place(relx=0.5, rely=y+0.2, anchor="center")
@@ -211,10 +207,8 @@ def create_excelfn(copied_text):
     # Metni bir defada parçalayarak işleme
     row = 4  # Başlangıç satırı
     lines = copied_text.split("\n")
-    #print("lines:",lines)
     for line in lines:
         values = line.split("\t")  # Satırdaki değerleri tab ile ayır
-        print("values:",values)
         col = 1  # Başlangıç sütunu
 
         for value in values:  # Satırdaki her değer için
@@ -257,7 +251,6 @@ def create_excelfn(copied_text):
                         worksheet.Cells(row, 5).Interior.Color = 255
                 elif col == 5:
                     worksheet.Cells(row, 6).Value = value  # Hücreye değeri yaz
-                                          
 
                 col += 1  # Sütunu bir artır
         # Bir sonraki satıra geçmeden önce kontrol et

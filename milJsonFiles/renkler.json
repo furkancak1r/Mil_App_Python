@@ -1,0 +1,9 @@
+{"colors" : {
+    "rgb(244, 176, 132)": ["orfis", "kangal", "kılcal", "exp", "valf", "evaporat"],
+    "rgb(0, 255, 182)": ["kondenser", "kompresör", "izolasyon", "klima", "bakır tel", "bas-sw", "likit", "dray", "gaz", "gözet-cam", "subap"],
+    "rgb(255, 255, 0)": ["dixell", "işlemci", "kontrol cihazı", "kablo", "klem", "swich", "otomat", "sigorta", "kontaktör", "rezistans", "kumanda", "prob", "eliwell", "adapt", "fiş", "priz", "röle", "termometre"],
+    "rgb(255, 153, 204)": ["kanop", "stickled", "led"],
+    "rgb(142, 169, 219)": ["profil", "eloksallı"],
+    "rgb(169, 208, 142)": ["cam", "ayna", "çerçeve", "kapı", "lex", "ol-takım"],
+    "rgb(153, 255, 153)": ["fan"]
+}}
