@@ -54,6 +54,7 @@ def fetch_json_data(json_file):
         print(f"Hata oluştu: {str(e)}")
         return None
 
+
 def remove_selected_words(data):
 
     # Belirtilen kelimeleri büyük harfe çevir
@@ -367,6 +368,9 @@ def handle_home_button():
     remove_button.place_forget()
     add_button.place_forget()
     add_entry.place_forget()
+    color_liste.place_forget()
+    liste.delete(*liste.get_children())
+
 
 
 def create_home_button(root):
@@ -398,10 +402,21 @@ def selectItem(liste):
     # Seçilen öğenin id'sini al
     item_id = liste.focus()
 
-    # Seçilen öğenin değerini al
-    item_value = liste.item(item_id, "values")[0]
+    # Eğer hiçbir öğe seçilmediyse None dön
+    if item_id is None:
+        return None
 
-    # Seçilen öğenin değerini print et
+    # Seçilen öğenin değerlerini al
+    item_values = liste.item(item_id, "values")
+
+    # Eğer değerler boşsa veya boş bir liste ise None dön
+    if not item_values:
+        return None
+
+    # Değerler listesinin ilk öğesini döndür
+    item_value = item_values[0]
+
+    # Seçilen öğenin değerini döndür
     return item_value
 
 
@@ -410,6 +425,10 @@ def handle_sheet_remove_button():
     sheet_remove_button.place_forget()
     colors_button.place_forget()
     settings_label.config(text="Sac Silme Ayarı")
+    liste.heading("#1", text="Sac Silme Kelimeler")
+    response = fetch_json_data('milJsonFiles/sacSil.json')
+    words_to_remove = response["words_to_remove"]
+    update_list(liste,words_to_remove)
     settings_label.place(relx=0.52, rely=y-0.1, anchor="center")
     liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
     remove_button.place(relx=0.65, rely=y+0.7, anchor="center")
@@ -452,6 +471,8 @@ def add_item_to_json(json_file, item, key):
         return "Veri alınamadı."
 
 # handle_add_button fonksiyonunu kullanırken konsola yazdırmayı unutmayın
+
+
 def handle_add_button():
     # Kullanıcıdan girdiyi alın
     item = add_entry.get()
@@ -468,12 +489,12 @@ def handle_add_button():
         approval_label.config(text=result, style="GreenApproval.TLabel")
         approval_label.place(relx=0.25, rely=y + 0.1, anchor="center")
         # 1.5 saniye sonra approval_label'ı gizle
-        root.after(1500, lambda: approval_label.place_forget())        
+        root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
         add_entry.delete(0, 'end')
         response = fetch_json_data('milJsonFiles/sacSil.json')
         words_to_remove = response["words_to_remove"]
-        update_list(liste,words_to_remove)
+        update_list(liste, words_to_remove)
     elif result == "Öğe zaten ekli.":
         warning_label.config(text=result, style="RedWarning.TLabel")
         warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
@@ -482,6 +503,7 @@ def handle_add_button():
     else:
         warning_label.config(text=result, style="RedWarning.TLabel")
         warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+
 
 def update_list(liste, list_items):
     # Liste üzerindeki mevcut öğelerin id'lerini al
@@ -502,7 +524,7 @@ def update_list(liste, list_items):
         # Fazla olan öğeleri sil
         for j in range(len(list_items), len(children)):
             liste.delete(children[j])
-    
+
 
 def create_add_button(root, add_entry):
     style = ttk.Style()
@@ -525,8 +547,48 @@ def create_add_button(root, add_entry):
 
 
 def handle_remove_button():
-    item = selectItem(liste)
-    print(item)
+    selected_item = selectItem(liste)
+    warning_label.place_forget()
+    approval_label.place_forget()
+
+    if selected_item:
+        json_file = 'milJsonFiles/sacSil.json'
+        key = 'words_to_remove'
+        result = remove_item_from_json(json_file, selected_item, key)
+        if result == f"Öğe '{selected_item}' başarıyla silindi.":
+            approval_label.config(text=result, style="GreenApproval.TLabel")
+            approval_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+            # 1.5 saniye sonra approval_label'ı gizle
+            root.after(1500, lambda: approval_label.place_forget())
+
+            response = fetch_json_data(json_file)
+            words_to_remove = response.get(key, [])
+            update_list(liste, words_to_remove)
+        else:
+            warning_label.config(text=result, style="RedWarning.TLabel")
+            warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+            # 1.5 saniye sonra warning_label'ı gizle
+            root.after(1500, lambda: warning_label.place_forget())
+    else:
+        warning_label.config(
+            text="Lütfen listeden öğe seçiniz.", style="RedWarning.TLabel")
+        warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        # 1.5 saniye sonra warning_label'ı gizle
+        root.after(1500, lambda: warning_label.place_forget())
+
+
+def remove_item_from_json(json_file, item, key):
+    data = fetch_json_data(json_file)
+    if key in data and isinstance(data[key], list) and item in data[key]:
+        data[key].remove(item)
+        try:
+            with open(json_file, 'w', encoding='utf-8') as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)
+            return f"Öğe '{item}' başarıyla silindi."
+        except Exception as e:
+            return f"Hata oluştu: {str(e)}"
+    else:
+        return f"Öğe '{item}' bulunamadı veya silinemedi."
 
 
 def create_remove_button(root):
@@ -554,6 +616,9 @@ def handle_colors_button():
     sheet_remove_button.place_forget()
     colors_button.place_forget()
     settings_label.config(text="Renk Ayarı")
+    settings_label.place(relx=0.5, rely=y-0.1, anchor="center")
+
+    color_liste.place(relx=0.25, rely=0.25, relwidth=0.5, relheight=0.6)
 
 
 def create_colors_button(root):
@@ -575,7 +640,6 @@ def create_approval_label(root):
     # Stili uygulanan bir Label widget'ı oluştur
     approval_label = ttk.Label(root, text="", style="GreenApproval.TLabel")
     return approval_label
-
 
 
 def set_font_style():
@@ -656,6 +720,71 @@ def create_liste(root, list_items, text_header):
     return liste
 
 
+def extract_last_digit_from_item_id(item_id):
+    # item_id'den son karakteri alın ve tamsayıya dönüştürün
+    last_digit = int(item_id[-1])
+    return last_digit
+
+def on_select_color(event):
+    # Olayın kaynağı olan liste widget'ını al
+    color_liste = event.widget
+
+    # Item ID'den indeksi al
+    item_id = color_liste.focus()
+    if item_id is None:
+        return None
+
+    response = fetch_json_data('milJsonFiles/renkler.json')
+    idx = extract_last_digit_from_item_id(item_id)
+
+    # Önceki sorgudan kalan arka plan rengini temizle
+    for row in liste.get_children():
+        liste.item(row, tags=())
+
+    # Seçili öğenin değerini al
+    item_value = color_liste.item(item_id)['values'][0]
+
+
+
+    # 3. veriyi bul ve konsola yazdır
+    if idx >= 0 and idx < len(response["colors"]):
+        idx_key_value_array = list(response["colors"].values())[idx]
+        update_list(liste, idx_key_value_array)
+    else:
+        print("Geçersiz İndeks")
+    # Tüm satırların arka plan rengini ayarla
+    for row in liste.get_children():
+        liste.item(row, tags=(item_value))
+        liste.tag_configure(item_value, background=item_value)
+
+    # Widget'ları düzenle
+    liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
+    yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
+    liste.heading("#1", text="Renkler")
+    color_liste.place_forget()
+
+
+def create_color_liste(root):
+    # Tkinter penceresi oluşturun
+    color_codes = ['#F4B084', '#00FFB6', '#FFFF00',
+                   '#FF99CC', '#8AA9DB', '#A9D08E', '#99FF99']
+
+    # Liste penceresini oluştur (show parametresini "headings" olarak ayarla)
+    color_liste = ttk.Treeview(root, columns=(
+        "Renkler"), show="headings", height=len(color_codes))
+    color_liste.heading("#1", text="Renkler")
+
+    # Liste öğelerini liste üzerinde görüntüle
+    for color_code in color_codes:
+        # Renk kodunu kullanarak arka plan rengini ayarlayın
+        color_liste.insert("", "end", values=(color_code), tags=(color_code))
+        color_liste.tag_configure(color_code, background=color_code)
+
+    # Öğe seçildiğinde çağrılacak işlevi tanımla
+    color_liste.bind("<<TreeviewSelect>>", on_select_color)
+
+    return color_liste
+
 
 def create_yscrollbar(root, liste):
     yscrollbar = ttk.Scrollbar(root, orient="vertical", command=liste.yview)
@@ -730,6 +859,7 @@ product_name_label = create_product_name_label(root)
 # Excel Ürün adeti labelı
 excel_product_count_label = create_excel_product_count_label(root)
 
+color_liste = create_color_liste(root)
 # Sipariş numarası için giriş alanı
 order_number_entry = create_order_number_entry(root)
 order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
