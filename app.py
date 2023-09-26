@@ -4,10 +4,8 @@ import os
 import json
 from tkinter import ttk
 from ttkthemes import ThemedTk
+import time
 
-# Excel application'ı başlat
-excel = win32.gencache.EnsureDispatch('Excel.Application')
-excel.Visible = True  # Excel penceresini görünür yap
 
 # Sabitler
 EXCEL_BORDER_STYLE = 1
@@ -47,12 +45,14 @@ def add_border_to_range(worksheet, start_cell, end_cell):
     borders.LineStyle = EXCEL_BORDER_STYLE
 
 
-def fetch_json_data(file_path):
-
-    with open(file_path, 'r') as file:
-        data = json.load(file)
+def fetch_json_data(json_file):
+    try:
+        with open(json_file, 'r', encoding='utf-8') as file:
+            data = json.load(file)
         return data
-
+    except Exception as e:
+        print(f"Hata oluştu: {str(e)}")
+        return None
 
 def remove_selected_words(data):
 
@@ -89,27 +89,30 @@ def validate_copied_text(copied_text):
 
 # Verileri alıp renklerine göre sıralayıp sıralanmış verileri dönen fonksiyon
 # Verileri alıp istediğiniz sıralamaya göre sıralayıp sıralanmış verileri dönen fonksiyon
+
+
 def sort_data_by_color(data):
-  
-  # İstenen sıralama
-  order = ["8696052", "11992832", "65535", "13408767", "14395790", "9359529", "10092441",""]
-  
-  # Verileri satırlara böl (boş satırları atla)
-  lines = data.splitlines()
-    
-  # Her satır için son sütunun değerini bul
-  values = [line.split("\t")[-1] for line in lines]
 
-  # Değerleri istenen sıralamaya göre indeksle
-  indices = [order.index(value) for value in values]
+    # İstenen sıralama
+    order = ["8696052", "11992832", "65535", "13408767",
+             "14395790", "9359529", "10092441", ""]
 
-  # Satırları indekslere göre sırala
-  sorted_lines = [line for _, line in sorted(zip(indices, lines))]
+    # Verileri satırlara böl (boş satırları atla)
+    lines = data.splitlines()
 
-  # Sıralanmış verileri birleştir
-  sorted_data = "\n".join(sorted_lines)
-  # Sıralanmış verileri döndür
-  return sorted_data
+    # Her satır için son sütunun değerini bul
+    values = [line.split("\t")[-1] for line in lines]
+
+    # Değerleri istenen sıralamaya göre indeksle
+    indices = [order.index(value) for value in values]
+
+    # Satırları indekslere göre sırala
+    sorted_lines = [line for _, line in sorted(zip(indices, lines))]
+
+    # Sıralanmış verileri birleştir
+    sorted_data = "\n".join(sorted_lines)
+    # Sıralanmış verileri döndür
+    return sorted_data
 
 
 def apply_colors(text):
@@ -142,8 +145,8 @@ def apply_colors(text):
 
         formatted_line = values
         result.append("\t".join(formatted_line))
-    result_excel_format = "\n".join(result)  
-    sorted_data_by_color= sort_data_by_color(result_excel_format)
+    result_excel_format = "\n".join(result)
+    sorted_data_by_color = sort_data_by_color(result_excel_format)
     return sorted_data_by_color
 
 
@@ -188,6 +191,10 @@ def create_excel():
 
 
 def create_excelfn(copied_text):
+    # Excel application'ı başlat
+    excel = win32.gencache.EnsureDispatch('Excel.Application')
+    excel.Visible = True  # Excel penceresini görünür yap
+
     product_name = product_name_entry.get()
     order_name = order_number_entry.get()
 
@@ -278,10 +285,9 @@ def create_excelfn(copied_text):
                         # Kırmızı rengi temsil eden değer
                         worksheet.Cells(row, 5).Interior.Color = 255
                 elif col == 5:
-                    #worksheet.Cells(row, 6).Value = value  # Hücreye değeri yaz
+                    # worksheet.Cells(row, 6).Value = value  # Hücreye değeri yaz
                     if value:
                         worksheet.Cells(row, 2).Interior.Color = value
-
 
                 col += 1  # Sütunu bir artır
         # Bir sonraki satıra geçmeden önce kontrol et
@@ -315,6 +321,9 @@ def forget():
     settings_button.place_forget()
     colors_button.place_forget()
     sheet_remove_button.place_forget()
+    liste.place_forget()
+    yscrollbar.place_forget()
+    root.update()
 
 
 def create_root():
@@ -338,10 +347,12 @@ def create_root():
 def create_warning_label(root):
     # Kırmızı renkli bir stil oluştur
     style = ttk.Style()
-    style.configure("Red.TLabel", foreground="red")
+
+    # Stili yalnızca warning_label için kullanmak için stil adına özel bir etiket stili tanımlayın
+    style.configure("RedWarning.TLabel", foreground="red")
 
     # Stili uygulanan bir Label widget'ı oluştur
-    warning_label = ttk.Label(root, text="", style="Red.TLabel")
+    warning_label = ttk.Label(root, text="", style="RedWarning.TLabel")
     return warning_label
 
 
@@ -352,6 +363,10 @@ def handle_home_button():
     colors_button.place_forget()
     sheet_remove_button.place_forget()
     settings_label.place_forget()
+    liste.place_forget()
+    remove_button.place_forget()
+    add_button.place_forget()
+    add_entry.place_forget()
 
 
 def create_home_button(root):
@@ -363,10 +378,10 @@ def handle_settings_button():
     forget()
     # home düğmesini oluştur
     home_button.place(relx=0.9, rely=y-0.1, anchor="center")
-
-    settings_label.place(relx=0.52, rely=y+0.1, anchor="center")
+    settings_label.place(relx=0.52, rely=y+0.05, anchor="center")
     sheet_remove_button.place(relx=0.4, rely=y+0.3, anchor="center")
     colors_button.place(relx=0.65, rely=y+0.3, anchor="center")
+    settings_label.config(text="Ayarlar")
 
 
 def create_settings_button(root):
@@ -374,13 +389,154 @@ def create_settings_button(root):
     # Ayarlar düğmesini oluştur
     settings_button = ttk.Button(
         root, text="⚙️", command=handle_settings_button)
+
     # Ayarlar düğmesini ana pencereye yerleştir
     return settings_button
 
 
+def selectItem(liste):
+    # Seçilen öğenin id'sini al
+    item_id = liste.focus()
+
+    # Seçilen öğenin değerini al
+    item_value = liste.item(item_id, "values")[0]
+
+    # Seçilen öğenin değerini print et
+    return item_value
+
+
 def handle_sheet_remove_button():
     # "Sac Sil" düğmesine tıklandığında yapılacak işlemler
-    pass
+    sheet_remove_button.place_forget()
+    colors_button.place_forget()
+    settings_label.config(text="Sac Silme Ayarı")
+    settings_label.place(relx=0.52, rely=y-0.1, anchor="center")
+    liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
+    remove_button.place(relx=0.65, rely=y+0.7, anchor="center")
+    add_button.place(relx=0.25, rely=y+0.3, anchor="center")
+    add_entry.place(relx=0.25, rely=y+0.2, anchor="center")
+
+    # Bu, scrollbar'ın listenin içinde görünmesini sağlar
+    yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
+
+
+def add_item_to_json(json_file, item, key):
+    # JSON verisini alın
+    data = fetch_json_data(json_file)
+
+    if data is not None:
+        # Item'i belirtilen anahtarın altındaki listeye ekleyin (eğer öğe henüz eklenmemişse)
+        if key in data and isinstance(data[key], list):
+            if item not in data[key]:
+                data[key].append(item)
+                # JSON dosyasına item'i ekleyin (UTF-8 kodlaması kullanarak)
+                try:
+                    with open(json_file, 'w', encoding='utf-8') as file:
+                        json.dump(data, file, indent=4, ensure_ascii=False)
+                    return "Öğe başarıyla eklendi!"
+                except Exception as e:
+                    return f"Hata oluştu: {str(e)}"
+            else:
+                return "Öğe zaten ekli."
+        else:
+            # Anahtar yoksa veya anahtar bir liste değilse yeni bir liste oluşturun
+            data[key] = [item]
+            # JSON dosyasına item'i ekleyin (UTF-8 kodlaması kullanarak)
+            try:
+                with open(json_file, 'w', encoding='utf-8') as file:
+                    json.dump(data, file, indent=4, ensure_ascii=False)
+                return "Öğe başarıyla eklendi!"
+            except Exception as e:
+                return f"Hata oluştu: {str(e)}"
+    else:
+        return "Veri alınamadı."
+
+# handle_add_button fonksiyonunu kullanırken konsola yazdırmayı unutmayın
+def handle_add_button():
+    # Kullanıcıdan girdiyi alın
+    item = add_entry.get()
+    warning_label.place_forget()
+    approval_label.place_forget()
+
+    # JSON dosyasına item'i ekleyin (örneğin, 'sacSil.json' dosyasına ekleyin)
+    json_file = 'milJsonFiles/sacSil.json'  # JSON dosyasının adını buraya ekleyin
+    key = 'words_to_remove'    # Anahtar adını buraya ekleyin
+    result = add_item_to_json(json_file, item, key)
+
+    # Kullanıcıya işlem sonucunu gösterin
+    if result == "Öğe başarıyla eklendi!":
+        approval_label.config(text=result, style="GreenApproval.TLabel")
+        approval_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        # 1.5 saniye sonra approval_label'ı gizle
+        root.after(1500, lambda: approval_label.place_forget())        
+        # Girdi alanını temizle
+        add_entry.delete(0, 'end')
+        response = fetch_json_data('milJsonFiles/sacSil.json')
+        words_to_remove = response["words_to_remove"]
+        update_list(liste,words_to_remove)
+    elif result == "Öğe zaten ekli.":
+        warning_label.config(text=result, style="RedWarning.TLabel")
+        warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        # 1.5 saniye sonra warning_label'ı gizle
+        root.after(1500, lambda: warning_label.place_forget())
+    else:
+        warning_label.config(text=result, style="RedWarning.TLabel")
+        warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+
+def update_list(liste, list_items):
+    # Liste üzerindeki mevcut öğelerin id'lerini al
+    children = liste.get_children()
+
+    # List_items arrayindeki her öğe için
+    for i, item in enumerate(list_items):
+        # Eğer liste üzerinde karşılık gelen bir öğe varsa
+        if i < len(children):
+            # Öğenin değerini güncelle
+            liste.item(children[i], values=(item))
+        else:
+            # Yoksa, yeni bir öğe ekle
+            liste.insert("", "end", values=(item))
+
+    # Eğer liste üzerinde fazla öğe varsa
+    if len(children) > len(list_items):
+        # Fazla olan öğeleri sil
+        for j in range(len(list_items), len(children)):
+            liste.delete(children[j])
+    
+
+def create_add_button(root, add_entry):
+    style = ttk.Style()
+    style.configure("Custom.TButton", font=("Segoe UI", 12))
+
+    add_button = ttk.Button(
+        root, text="Ekle", command=handle_add_button, style="Custom.TButton")
+    add_button.config(state="disabled")
+
+    def add_check_and_enable_button(event):
+        add_entry_text = add_entry.get()
+        if not add_entry_text:
+            add_button.config(state="disabled")
+        else:
+            add_button.config(state="normal")
+
+    add_entry.bind("<KeyRelease>", add_check_and_enable_button)
+
+    return add_button
+
+
+def handle_remove_button():
+    item = selectItem(liste)
+    print(item)
+
+
+def create_remove_button(root):
+    style = ttk.Style()
+    # Segoe UI fontu ve 12 punto olarak ayarla
+    style.configure("Custom.TButton", font=("Segoe UI", 12))
+
+    remove_button = ttk.Button(
+        root, text="Kaldır", command=handle_remove_button, style="Custom.TButton")
+    return remove_button
 
 
 def create_sheet_remove_button(root):
@@ -395,7 +551,9 @@ def create_sheet_remove_button(root):
 
 def handle_colors_button():
     # "Colors" düğmesine tıklandığında yapılacak işlemler
-    pass
+    sheet_remove_button.place_forget()
+    colors_button.place_forget()
+    settings_label.config(text="Renk Ayarı")
 
 
 def create_colors_button(root):
@@ -410,11 +568,14 @@ def create_colors_button(root):
 def create_approval_label(root):
     # Yeşil renkli bir stil oluştur
     style = ttk.Style()
-    style.configure("Green.TLabel", foreground="green")
+
+    # Stili yalnızca approval_label için kullanmak için stil adına özel bir etiket stili tanımlayın
+    style.configure("GreenApproval.TLabel", foreground="green")
 
     # Stili uygulanan bir Label widget'ı oluştur
-    approval_label = ttk.Label(root, text="", style="Green.TLabel")
+    approval_label = ttk.Label(root, text="", style="GreenApproval.TLabel")
     return approval_label
+
 
 
 def set_font_style():
@@ -460,6 +621,11 @@ def create_order_number_entry(root):
     return order_number_entry
 
 
+def create_add_entry(root):
+    add_entry = ttk.Entry(root)
+    return add_entry
+
+
 def create_remove_sheet_metal_checkbox_entry(root):
     # "Sac Sil" butonuna tıklanıp tıklanmadığını takip eden değişken
     sac_sil_flag = tk.BooleanVar()
@@ -473,6 +639,28 @@ def create_remove_sheet_metal_checkbox_entry(root):
         root, text="Sac Sil", variable=sac_sil_flag, style="Custom.TCheckbutton")
 
     return remove_sheet_metal_checkbox, sac_sil_flag
+
+
+def create_liste(root, list_items, text_header):
+    # Liste penceresini oluştur (show parametresini "headings" olarak ayarla)
+    liste = ttk.Treeview(root, columns=("Veriler"), show="headings", height=10)
+    liste.heading("#1", text=text_header)
+
+    # Liste öğelerini liste üzerinde görüntüle
+    for item in list_items:
+        liste.insert("", "end", values=(item))
+
+    # Öğe seçildiğinde çağrılacak işlevi tanımla
+    liste.bind("<<TreeviewSelect>>", lambda event: selectItem(liste))
+
+    return liste
+
+
+
+def create_yscrollbar(root, liste):
+    yscrollbar = ttk.Scrollbar(root, orient="vertical", command=liste.yview)
+    liste.configure(yscrollcommand=yscrollbar.set)
+    return yscrollbar
 
 
 def create_excel_product_count_entry(root):
@@ -522,7 +710,7 @@ def create_settings_label(root):
     style = ttk.Style()
     style.configure("b.TLabel", font=("Segoe UI", 18))
 
-    settings_label = ttk.Label(root, text="Ayarlar", style="b.TLabel")
+    settings_label = ttk.Label(root, text="", style="b.TLabel")
     return settings_label
 
 
@@ -555,13 +743,13 @@ excel_product_count_entry = create_excel_product_count_entry(root)
 # "Sac Sil" butonunu ve durumunu al
 remove_sheet_metal_checkbox, sac_sil_flag = create_remove_sheet_metal_checkbox_entry(
     root)
-
+add_entry = create_add_entry(root)
 # "Oluştur" düğmesi
 create_button = create_create_button(root, create_excel)
-
+add_button = create_add_button(root, add_entry)
 settings_button = create_settings_button(root)
 home_button = create_home_button(root)
-
+remove_button = create_remove_button(root)
 # Ayarlar etkieti
 settings_label = create_settings_label(root)
 
@@ -569,6 +757,17 @@ settings_label = create_settings_label(root)
 colors_button = create_colors_button(root)
 # Sac sil butonu
 sheet_remove_button = create_sheet_remove_button(root)
+
+
+def listfn(root):
+    response = fetch_json_data('milJsonFiles/sacSil.json')
+    words_to_remove = response["words_to_remove"]
+    liste = create_liste(root, words_to_remove, "Sac Sil Kelimeler")
+    return liste
+
+
+liste = listfn(root)
+yscrollbar = create_yscrollbar(root, liste)
 
 
 def place():
@@ -582,7 +781,6 @@ def place():
     remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.425, anchor="center")
     create_button.place(relx=0.5, rely=y+0.55, anchor="center")
     settings_button.place(relx=0.9, rely=y-0.1, anchor="center")
-    root.update()
 
 
 place()
