@@ -4,7 +4,6 @@ import os
 import json
 from tkinter import ttk
 from ttkthemes import ThemedTk
-import time
 
 
 # Sabitler
@@ -18,7 +17,6 @@ EXCEL_HORIZONTAL_ALIGNMENT_CENTER = -4108
 header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
 
-y = 0.2
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
 
@@ -159,11 +157,11 @@ def create_excel():
 
     if not copied_text:
         warning_label.config(text="Lütfen ürünleri kopyalayın!")
-        warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
+        warning_label.place(relx=0.5, rely=0.1, anchor="center")
 
     if not validate_copied_text(copied_text):
         warning_label.config(text="Yanlış içerik kopyalanmış!")
-        warning_label.place(relx=0.5, rely=y-0.1, anchor="center")
+        warning_label.place(relx=0.5, rely=0.1, anchor="center")
 
         return
 
@@ -171,7 +169,7 @@ def create_excel():
         warning_label.destroy()  # Label'ı kaldır
         approval_label.config(text="Excel oluşturuluyor...")
         create_button.config(state="disabled")
-        approval_label.place(relx=0.5, rely=y-0.1, anchor="center")
+        approval_label.place(relx=0.5, rely=0.1, anchor="center")
         root.update()  # Arayüzü güncelle
         if sac_sil_flag.get():  # Eğer sac sil seçiliyse
             # Kopyalanan metinden belirtilen kelimeleri sil
@@ -186,7 +184,7 @@ def create_excel():
             # Yeni veriyi kopyala
             create_excelfn(result)
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
-        approval_label.place(relx=0.5, rely=y+0.2, anchor="center")
+        approval_label.place(relx=0.5, rely=0.4, anchor="center")
 
 # Excel dosyasını oluşturmak için fonksiyon
 
@@ -360,7 +358,7 @@ def create_warning_label(root):
 def handle_home_button():
     home_button.place_forget()
     place()
-    settings_button.place(relx=0.9, rely=y-0.1, anchor="center")
+    settings_button.place(relx=0.9, rely=0.1, anchor="center")
     colors_button.place_forget()
     sheet_remove_button.place_forget()
     settings_label.place_forget()
@@ -381,10 +379,10 @@ def create_home_button(root):
 def handle_settings_button():
     forget()
     # home düğmesini oluştur
-    home_button.place(relx=0.9, rely=y-0.1, anchor="center")
-    settings_label.place(relx=0.52, rely=y+0.05, anchor="center")
-    sheet_remove_button.place(relx=0.4, rely=y+0.3, anchor="center")
-    colors_button.place(relx=0.65, rely=y+0.3, anchor="center")
+    home_button.place(relx=0.9, rely=0.1, anchor="center")
+    settings_label.place(relx=0.52, rely=0.25, anchor="center")
+    sheet_remove_button.place(relx=0.4, rely=0.5, anchor="center")
+    colors_button.place(relx=0.65, rely=0.5, anchor="center")
     settings_label.config(text="Ayarlar")
 
 
@@ -429,11 +427,11 @@ def handle_sheet_remove_button():
     response = fetch_json_data('milJsonFiles/sacSil.json')
     words_to_remove = response["words_to_remove"]
     update_list(liste,words_to_remove)
-    settings_label.place(relx=0.52, rely=y-0.1, anchor="center")
+    settings_label.place(relx=0.52, rely=0.1, anchor="center")
     liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
-    remove_button.place(relx=0.65, rely=y+0.7, anchor="center")
-    add_button.place(relx=0.25, rely=y+0.3, anchor="center")
-    add_entry.place(relx=0.25, rely=y+0.2, anchor="center")
+    remove_button.place(relx=0.65, rely=0.9, anchor="center")
+    add_button.place(relx=0.25, rely=0.5, anchor="center")
+    add_entry.place(relx=0.25, rely=0.4, anchor="center")
 
     # Bu, scrollbar'ın listenin içinde görünmesini sağlar
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
@@ -487,7 +485,7 @@ def handle_add_button():
     # Kullanıcıya işlem sonucunu gösterin
     if result == "Öğe başarıyla eklendi!":
         approval_label.config(text=result, style="GreenApproval.TLabel")
-        approval_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        approval_label.place(relx=0.25, rely=0.3, anchor="center")
         # 1.5 saniye sonra approval_label'ı gizle
         root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
@@ -497,12 +495,12 @@ def handle_add_button():
         update_list(liste, words_to_remove)
     elif result == "Öğe zaten ekli.":
         warning_label.config(text=result, style="RedWarning.TLabel")
-        warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        warning_label.place(relx=0.25, rely=0.3, anchor="center")
         # 1.5 saniye sonra warning_label'ı gizle
         root.after(1500, lambda: warning_label.place_forget())
     else:
         warning_label.config(text=result, style="RedWarning.TLabel")
-        warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        warning_label.place(relx=0.25, rely=0.3, anchor="center")
 
 
 def update_list(liste, list_items):
@@ -557,7 +555,7 @@ def handle_remove_button():
         result = remove_item_from_json(json_file, selected_item, key)
         if result == f"Öğe '{selected_item}' başarıyla silindi.":
             approval_label.config(text=result, style="GreenApproval.TLabel")
-            approval_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+            approval_label.place(relx=0.25, rely=0.3, anchor="center")
             # 1.5 saniye sonra approval_label'ı gizle
             root.after(1500, lambda: approval_label.place_forget())
 
@@ -566,13 +564,13 @@ def handle_remove_button():
             update_list(liste, words_to_remove)
         else:
             warning_label.config(text=result, style="RedWarning.TLabel")
-            warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+            warning_label.place(relx=0.25, rely=0.3, anchor="center")
             # 1.5 saniye sonra warning_label'ı gizle
             root.after(1500, lambda: warning_label.place_forget())
     else:
         warning_label.config(
             text="Lütfen listeden öğe seçiniz.", style="RedWarning.TLabel")
-        warning_label.place(relx=0.25, rely=y + 0.1, anchor="center")
+        warning_label.place(relx=0.25, rely=0.3, anchor="center")
         # 1.5 saniye sonra warning_label'ı gizle
         root.after(1500, lambda: warning_label.place_forget())
 
@@ -616,7 +614,7 @@ def handle_colors_button():
     sheet_remove_button.place_forget()
     colors_button.place_forget()
     settings_label.config(text="Renk Ayarı")
-    settings_label.place(relx=0.5, rely=y-0.1, anchor="center")
+    settings_label.place(relx=0.5, rely=0.1, anchor="center")
 
     color_liste.place(relx=0.25, rely=0.25, relwidth=0.5, relheight=0.6)
 
@@ -902,15 +900,15 @@ yscrollbar = create_yscrollbar(root, liste)
 
 def place():
 
-    order_number_label.place(relx=0.35, rely=y+0.1, anchor="center")
-    order_number_entry.place(relx=0.6, rely=y+0.1, anchor="center")
-    product_name_label.place(relx=0.4, rely=y+0.2, anchor="center")
-    product_name_entry.place(relx=0.6, rely=y+0.2, anchor="center")
-    excel_product_count_label.place(relx=0.39, rely=y+0.3, anchor="center")
-    excel_product_count_entry.place(relx=0.6, rely=y+0.3, anchor="center")
-    remove_sheet_metal_checkbox.place(relx=0.5, rely=y+0.425, anchor="center")
-    create_button.place(relx=0.5, rely=y+0.55, anchor="center")
-    settings_button.place(relx=0.9, rely=y-0.1, anchor="center")
+    order_number_label.place(relx=0.35, rely=0.3, anchor="center")
+    order_number_entry.place(relx=0.6, rely=0.3, anchor="center")
+    product_name_label.place(relx=0.4, rely=0.4, anchor="center")
+    product_name_entry.place(relx=0.6, rely=0.4, anchor="center")
+    excel_product_count_label.place(relx=0.39, rely=0.5, anchor="center")
+    excel_product_count_entry.place(relx=0.6, rely=0.5, anchor="center")
+    remove_sheet_metal_checkbox.place(relx=0.5, rely=0.625, anchor="center")
+    create_button.place(relx=0.5, rely=0.75, anchor="center")
+    settings_button.place(relx=0.9, rely=0.1, anchor="center")
 
 
 place()
