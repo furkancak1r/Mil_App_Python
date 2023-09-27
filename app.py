@@ -4,6 +4,7 @@ import os
 import json
 from tkinter import ttk
 from ttkthemes import ThemedTk
+from elements.elements import create_button, create_add_button, generate_create_button, item_place
 
 
 # Sabitler
@@ -157,19 +158,19 @@ def create_excel():
 
     if not copied_text:
         warning_label.config(text="Lütfen ürünleri kopyalayın!")
-        warning_label.place(relx=0.5, rely=0.1, anchor="center")
+        item_place(warning_label, 0.5, 0.1)
 
     if not validate_copied_text(copied_text):
         warning_label.config(text="Yanlış içerik kopyalanmış!")
-        warning_label.place(relx=0.5, rely=0.1, anchor="center")
+        item_place(warning_label, 0.5, 0.1)
 
         return
 
     else:
         warning_label.destroy()  # Label'ı kaldır
         approval_label.config(text="Excel oluşturuluyor...")
-        create_button.config(state="disabled")
-        approval_label.place(relx=0.5, rely=0.1, anchor="center")
+        create_buttona.config(state="disabled")
+        item_place(approval_label, 0.5, 0.1)
         root.update()  # Arayüzü güncelle
         if sac_sil_flag.get():  # Eğer sac sil seçiliyse
             # Kopyalanan metinden belirtilen kelimeleri sil
@@ -184,7 +185,8 @@ def create_excel():
             # Yeni veriyi kopyala
             create_excelfn(result)
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
-        approval_label.place(relx=0.5, rely=0.4, anchor="center")
+        item_place(approval_label, 0.5, 0.4)
+
 
 # Excel dosyasını oluşturmak için fonksiyon
 
@@ -316,7 +318,7 @@ def forget():
     excel_product_count_label.place_forget()
     excel_product_count_entry.place_forget()
     remove_sheet_metal_checkbox.place_forget()
-    create_button.place_forget()
+    create_buttona.place_forget()
     settings_button.place_forget()
     colors_button.place_forget()
     sheet_remove_button.place_forget()
@@ -358,7 +360,7 @@ def create_warning_label(root):
 def handle_home_button():
     home_button.place_forget()
     place()
-    settings_button.place(relx=0.9, rely=0.1, anchor="center")
+    item_place(settings_button, 0.9, 0.1)
     colors_button.place_forget()
     sheet_remove_button.place_forget()
     settings_label.place_forget()
@@ -370,30 +372,13 @@ def handle_home_button():
     liste.delete(*liste.get_children())
 
 
-
-def create_home_button(root):
-    home_button = ttk.Button(root, text="🏠", command=handle_home_button)
-    return home_button
-
-
 def handle_settings_button():
     forget()
-    # home düğmesini oluştur
-    home_button.place(relx=0.9, rely=0.1, anchor="center")
-    settings_label.place(relx=0.52, rely=0.25, anchor="center")
-    sheet_remove_button.place(relx=0.4, rely=0.5, anchor="center")
-    colors_button.place(relx=0.65, rely=0.5, anchor="center")
+    item_place(home_button, 0.9, 0.1)
+    item_place(settings_label, 0.49, 0.25)
+    item_place(sheet_remove_button, 0.37, 0.5)
+    item_place(colors_button, 0.62, 0.5)
     settings_label.config(text="Ayarlar")
-
-
-def create_settings_button(root):
-
-    # Ayarlar düğmesini oluştur
-    settings_button = ttk.Button(
-        root, text="⚙️", command=handle_settings_button)
-
-    # Ayarlar düğmesini ana pencereye yerleştir
-    return settings_button
 
 
 def selectItem(liste):
@@ -426,15 +411,15 @@ def handle_sheet_remove_button():
     liste.heading("#1", text="Sac Silme Kelimeler")
     response = fetch_json_data('milJsonFiles/sacSil.json')
     words_to_remove = response["words_to_remove"]
-    update_list(liste,words_to_remove)
-    settings_label.place(relx=0.52, rely=0.1, anchor="center")
+    update_list(liste, words_to_remove)
     liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
-    remove_button.place(relx=0.65, rely=0.9, anchor="center")
-    add_button.place(relx=0.25, rely=0.5, anchor="center")
-    add_entry.place(relx=0.25, rely=0.4, anchor="center")
-
     # Bu, scrollbar'ın listenin içinde görünmesini sağlar
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
+
+    item_place(settings_label, 0.52, 0.1)
+    item_place(remove_button, 0.65, 0.9)
+    item_place(add_button, 0.25, 0.5)
+    item_place(add_entry, 0.25, 0.4)
 
 
 def add_item_to_json(json_file, item, key):
@@ -485,7 +470,7 @@ def handle_add_button():
     # Kullanıcıya işlem sonucunu gösterin
     if result == "Öğe başarıyla eklendi!":
         approval_label.config(text=result, style="GreenApproval.TLabel")
-        approval_label.place(relx=0.25, rely=0.3, anchor="center")
+        item_place(approval_label, 0.25, 0.3)
         # 1.5 saniye sonra approval_label'ı gizle
         root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
@@ -495,12 +480,13 @@ def handle_add_button():
         update_list(liste, words_to_remove)
     elif result == "Öğe zaten ekli.":
         warning_label.config(text=result, style="RedWarning.TLabel")
-        warning_label.place(relx=0.25, rely=0.3, anchor="center")
+        item_place(warning_label, 0.25, 0.3)
         # 1.5 saniye sonra warning_label'ı gizle
         root.after(1500, lambda: warning_label.place_forget())
     else:
         warning_label.config(text=result, style="RedWarning.TLabel")
-        warning_label.place(relx=0.25, rely=0.3, anchor="center")
+        item_place(warning_label, 0.25, 0.3)
+
 
 
 def update_list(liste, list_items):
@@ -524,26 +510,6 @@ def update_list(liste, list_items):
             liste.delete(children[j])
 
 
-def create_add_button(root, add_entry):
-    style = ttk.Style()
-    style.configure("Custom.TButton", font=("Segoe UI", 12))
-
-    add_button = ttk.Button(
-        root, text="Ekle", command=handle_add_button, style="Custom.TButton")
-    add_button.config(state="disabled")
-
-    def add_check_and_enable_button(event):
-        add_entry_text = add_entry.get()
-        if not add_entry_text:
-            add_button.config(state="disabled")
-        else:
-            add_button.config(state="normal")
-
-    add_entry.bind("<KeyRelease>", add_check_and_enable_button)
-
-    return add_button
-
-
 def handle_remove_button():
     selected_item = selectItem(liste)
     warning_label.place_forget()
@@ -555,7 +521,7 @@ def handle_remove_button():
         result = remove_item_from_json(json_file, selected_item, key)
         if result == f"Öğe '{selected_item}' başarıyla silindi.":
             approval_label.config(text=result, style="GreenApproval.TLabel")
-            approval_label.place(relx=0.25, rely=0.3, anchor="center")
+            item_place(approval_label, 0.25, 0.3)
             # 1.5 saniye sonra approval_label'ı gizle
             root.after(1500, lambda: approval_label.place_forget())
 
@@ -564,13 +530,13 @@ def handle_remove_button():
             update_list(liste, words_to_remove)
         else:
             warning_label.config(text=result, style="RedWarning.TLabel")
-            warning_label.place(relx=0.25, rely=0.3, anchor="center")
+            item_place(warning_label, 0.25, 0.3)
             # 1.5 saniye sonra warning_label'ı gizle
             root.after(1500, lambda: warning_label.place_forget())
     else:
         warning_label.config(
             text="Lütfen listeden öğe seçiniz.", style="RedWarning.TLabel")
-        warning_label.place(relx=0.25, rely=0.3, anchor="center")
+        item_place(warning_label, 0.25, 0.3)
         # 1.5 saniye sonra warning_label'ı gizle
         root.after(1500, lambda: warning_label.place_forget())
 
@@ -589,43 +555,14 @@ def remove_item_from_json(json_file, item, key):
         return f"Öğe '{item}' bulunamadı veya silinemedi."
 
 
-def create_remove_button(root):
-    style = ttk.Style()
-    # Segoe UI fontu ve 12 punto olarak ayarla
-    style.configure("Custom.TButton", font=("Segoe UI", 12))
-
-    remove_button = ttk.Button(
-        root, text="Kaldır", command=handle_remove_button, style="Custom.TButton")
-    return remove_button
-
-
-def create_sheet_remove_button(root):
-    style = ttk.Style()
-    # Segoe UI fontu ve 12 punto olarak ayarla
-    style.configure("Custom.TButton", font=("Segoe UI", 12))
-
-    sheet_remove_button = ttk.Button(
-        root, text="Sac Silme", command=handle_sheet_remove_button, style="Custom.TButton")
-    return sheet_remove_button
-
-
 def handle_colors_button():
     # "Colors" düğmesine tıklandığında yapılacak işlemler
     sheet_remove_button.place_forget()
     colors_button.place_forget()
     settings_label.config(text="Renk Ayarı")
-    settings_label.place(relx=0.5, rely=0.1, anchor="center")
+    item_place(settings_label, 0.5, 0.1)
 
     color_liste.place(relx=0.25, rely=0.25, relwidth=0.5, relheight=0.6)
-
-
-def create_colors_button(root):
-    style = ttk.Style()
-    # Segoe UI fontu ve 12 punto olarak ayarla
-    style.configure("Custom.TButton", font=("Segoe UI", 12))
-    colors_button = ttk.Button(
-        root, text="Renk", command=handle_colors_button, style="Custom.TButton")
-    return colors_button
 
 
 def create_approval_label(root):
@@ -723,6 +660,7 @@ def extract_last_digit_from_item_id(item_id):
     last_digit = int(item_id[-1])
     return last_digit
 
+
 def on_select_color(event):
     # Olayın kaynağı olan liste widget'ını al
     color_liste = event.widget
@@ -741,8 +679,6 @@ def on_select_color(event):
 
     # Seçili öğenin değerini al
     item_value = color_liste.item(item_id)['values'][0]
-
-
 
     # 3. veriyi bul ve konsola yazdır
     if idx >= 0 and idx < len(response["colors"]):
@@ -804,34 +740,6 @@ def create_excel_product_count_entry(root):
     return excel_product_count_entry
 
 
-def create_create_button(root, create_excel):
-
-    style = ttk.Style()
-    # Segoe UI fontu ve 12 punto olarak ayarla
-    style.configure("Custom.TButton", font=("Segoe UI", 12))
-    create_button = ttk.Button(
-        root, text="Oluştur", command=create_excel, style="Custom.TButton")
-    # Başlangıçta düğmeyi devre dışı bırak
-    create_button.config(state="disabled")
-
-    def check_and_enable_button(event):
-        product_name = product_name_entry.get()
-        order_number = order_number_entry.get()
-        excel_product_count = excel_product_count_entry.get()
-        if not order_number or not product_name or not excel_product_count:
-            create_button.config(state="disabled")
-        else:
-            create_button.config(state="normal")
-    order_number_entry.bind(
-        "<KeyRelease>", check_and_enable_button)
-    product_name_entry.bind(
-        "<KeyRelease>", check_and_enable_button)
-    excel_product_count_entry.bind(
-        "<KeyRelease>", check_and_enable_button)
-
-    return create_button
-
-
 def create_settings_label(root):
     # Özel stil ile bir Label widget'ı oluştur
     style = ttk.Style()
@@ -843,6 +751,25 @@ def create_settings_label(root):
 
 # Tkinter penceresini oluştur
 root = create_root()
+add_entry = create_add_entry(root)
+# Excel dosyası adı için
+product_name_entry = create_product_name_entry(root)
+# Sipariş numarası için giriş alanı
+order_number_entry = create_order_number_entry(root)
+order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
+# Excel Ürün adeti için giriş alanı
+excel_product_count_entry = create_excel_product_count_entry(root)
+
+home_button = create_button(root, "🏠", handle_home_button, False)
+settings_button = create_button(root, "⚙️", handle_settings_button, False)
+add_button = create_add_button(root, handle_add_button, add_entry)
+remove_button = create_button(root, "Kaldır", handle_remove_button, True)
+colors_button = create_button(root, "Renkler", handle_colors_button, True)
+sheet_remove_button = create_button(
+    root, "Sac Silme", handle_sheet_remove_button, True)
+create_buttona = generate_create_button(
+    root, create_excel, product_name_entry, order_number_entry, excel_product_count_entry)
+
 
 # Uyarı etiketleri
 warning_label = create_warning_label(root)
@@ -858,57 +785,42 @@ product_name_label = create_product_name_label(root)
 excel_product_count_label = create_excel_product_count_label(root)
 
 color_liste = create_color_liste(root)
-# Sipariş numarası için giriş alanı
-order_number_entry = create_order_number_entry(root)
-order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
 
-# Excel dosyası adı için
-product_name_entry = create_product_name_entry(root)
-
-# Excel Ürün adeti için giriş alanı
-excel_product_count_entry = create_excel_product_count_entry(root)
 
 # "Sac Sil" butonunu ve durumunu al
 remove_sheet_metal_checkbox, sac_sil_flag = create_remove_sheet_metal_checkbox_entry(
     root)
-add_entry = create_add_entry(root)
-# "Oluştur" düğmesi
-create_button = create_create_button(root, create_excel)
-add_button = create_add_button(root, add_entry)
-settings_button = create_settings_button(root)
-home_button = create_home_button(root)
-remove_button = create_remove_button(root)
 # Ayarlar etkieti
 settings_label = create_settings_label(root)
-
-# Renkler Butonu
-colors_button = create_colors_button(root)
-# Sac sil butonu
-sheet_remove_button = create_sheet_remove_button(root)
 
 
 def listfn(root):
     response = fetch_json_data('milJsonFiles/sacSil.json')
-    words_to_remove = response["words_to_remove"]
-    liste = create_liste(root, words_to_remove, "Sac Sil Kelimeler")
-    return liste
+    if response is not None:
+        words_to_remove = response.get("words_to_remove")
+        if words_to_remove:
+            liste = create_liste(root, words_to_remove, "Sac Sil Kelimeler")
+            return liste
+    return None
 
 
 liste = listfn(root)
-yscrollbar = create_yscrollbar(root, liste)
+
+if liste is not None:
+    yscrollbar = create_yscrollbar(root, liste)
 
 
 def place():
 
-    order_number_label.place(relx=0.35, rely=0.3, anchor="center")
-    order_number_entry.place(relx=0.6, rely=0.3, anchor="center")
-    product_name_label.place(relx=0.4, rely=0.4, anchor="center")
-    product_name_entry.place(relx=0.6, rely=0.4, anchor="center")
-    excel_product_count_label.place(relx=0.39, rely=0.5, anchor="center")
-    excel_product_count_entry.place(relx=0.6, rely=0.5, anchor="center")
-    remove_sheet_metal_checkbox.place(relx=0.5, rely=0.625, anchor="center")
-    create_button.place(relx=0.5, rely=0.75, anchor="center")
-    settings_button.place(relx=0.9, rely=0.1, anchor="center")
+    item_place(order_number_label, 0.35, 0.3)
+    item_place(order_number_entry, 0.6, 0.3)
+    item_place(product_name_label, 0.4, 0.4)
+    item_place(product_name_entry, 0.6, 0.4)
+    item_place(excel_product_count_label, 0.39, 0.5)
+    item_place(excel_product_count_entry, 0.6, 0.5)
+    item_place(remove_sheet_metal_checkbox, 0.5, 0.625)
+    item_place(create_buttona, 0.5, 0.75)
+    item_place(settings_button, 0.9, 0.1)
 
 
 place()
