@@ -17,6 +17,8 @@ header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
 idx = None
 item_value = None  # seçili rengin hex kodu
+sheet_metals_path="milJsonFiles/sacSil.json"
+colors_path="milJsonFiles/renkler.json"
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
 
@@ -56,7 +58,7 @@ def fetch_json_data(json_file):
 def remove_selected_words(data):
 
     # Belirtilen kelimeleri büyük harfe çevir
-    response = fetch_json_data('milJsonFiles/sacSil.json')
+    response = fetch_json_data(sheet_metals_path)
     words_to_remove = response["words_to_remove"]
     words_to_remove = [word.upper() for word in words_to_remove]
 
@@ -115,7 +117,7 @@ def sort_data_by_color(data):
 
 
 def apply_colors(text):
-    response = fetch_json_data('milJsonFiles/renkler.json')
+    response = fetch_json_data(colors_path)
     colors = response["colors"]
     result = []
 
@@ -338,7 +340,8 @@ def handle_home_button():
     add_entry.place_forget()
     color_liste.place_forget()
     liste.delete(*liste.get_children())
-
+    add_color_button.place_forget()
+    add_color_entry.place_forget()
 
 def handle_settings_button():
     forget()
@@ -377,7 +380,7 @@ def handle_sheet_remove_button():
     colors_button.place_forget()
     settings_label.config(text="Sac Silme Ayarı")
     liste.heading("#1", text="Sac Silme Kelimeler")
-    response = fetch_json_data('milJsonFiles/sacSil.json')
+    response = fetch_json_data(sheet_metals_path)
     words_to_remove = response["words_to_remove"]
     update_list(liste, words_to_remove)
     place_list(liste, 0.4, 0.2, 0.5, 0.6)
@@ -429,7 +432,7 @@ def handle_add_button():
     approval_label.place_forget()
 
     # JSON dosyasına item'i ekleyin (örneğin, 'sacSil.json' dosyasına ekleyin)
-    json_file = 'milJsonFiles/sacSil.json'  # JSON dosyasının adını buraya ekleyin
+    json_file = sheet_metals_path  # JSON dosyasının adını buraya ekleyin
     key = 'words_to_remove'    # Anahtar adını buraya ekleyin
     result = add_item_to_json(json_file, item, key)
 
@@ -441,7 +444,7 @@ def handle_add_button():
         root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
         add_entry.delete(0, 'end')
-        response = fetch_json_data('milJsonFiles/sacSil.json')
+        response = fetch_json_data(sheet_metals_path)
         words_to_remove = response["words_to_remove"]
         update_list(liste, words_to_remove)
     elif result == "Öğe zaten ekli.":
@@ -482,7 +485,7 @@ def handle_remove_button():
     approval_label.place_forget()
 
     if selected_item:
-        json_file = 'milJsonFiles/sacSil.json'
+        json_file = sheet_metals_path
         key = 'words_to_remove'
         result = remove_item_from_json(json_file, selected_item, key)
         if result == f"Öğe '{selected_item}' başarıyla silindi.":
@@ -580,7 +583,7 @@ def handle_add_color_button():
     approval_label.place_forget()
 
     # JSON dosyasına item'i ekleyin (örneğin, 'sacSil.json' dosyasına ekleyin)
-    json_file = 'milJsonFiles/renkler.json'  # JSON dosyasının adını buraya ekleyin
+    json_file = colors_path  # JSON dosyasının adını buraya ekleyin
 
     result = add_item_to_json_with_index(json_file, item)
 
@@ -592,7 +595,7 @@ def handle_add_color_button():
         root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
         add_color_entry.delete(0, 'end')
-        update_list_with_index(liste, 'milJsonFiles/renkler.json', idx)
+        update_list_with_index(liste, colors_path, idx)
 
     elif result == "Öğe zaten ekli.":
         warning_label.config(text=result, style="RedWarning.TLabel")
@@ -640,7 +643,7 @@ def on_select_color(event):
     item_value = color_liste.item(item_id)['values'][0]
 
     # İndekse göre liste güncellemesini yap
-    update_list_with_index(liste, 'milJsonFiles/renkler.json', idx)
+    update_list_with_index(liste, colors_path, idx)
 
     # Widget'ları düzenle
     place_list(liste, 0.4, 0.2, 0.5, 0.6)
@@ -706,7 +709,7 @@ remove_sheet_metal_checkbox, sac_sil_flag = create_remove_sheet_metal_checkbox_e
 
 
 def listfn(root):
-    response = fetch_json_data('milJsonFiles/sacSil.json')
+    response = fetch_json_data(sheet_metals_path)
     if response is not None:
         words_to_remove = response.get("words_to_remove")
         if words_to_remove:
