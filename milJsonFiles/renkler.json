@@ -14,11 +14,11 @@
             "izolasyon",
             "klima",
             "bakır tel",
-            "bas-sw",
+            "bas*sw",
             "likit",
             "dray",
             "gaz",
-            "gözet-cam",
+            "gözet*cam",
             "subap"
         ],
         "65535": [
@@ -56,7 +56,7 @@
             "çerçeve",
             "kapı",
             "lex",
-            "ol-takım"
+            "ol*takım"
         ],
         "10092441": [
             "fan"

@@ -90,7 +90,8 @@ def create_label_with_style(parent, text, style_name):
     style.configure("RedWarning.TLabel", foreground="red")
     style.configure("b.TLabel", font=("Segoe UI", 18))
     style.configure("GreenApproval.TLabel", foreground="green")
-    style.configure("Custom.TLabel", font=(12))
+    style.configure("Custom.TLabel", font=("Segoe UI", 12))
+    style.configure("Note.TLabel", font=("Segoe UI", 8),foreground="grey")
 
 
     label = ttk.Label(parent, text=text, style=style_name)

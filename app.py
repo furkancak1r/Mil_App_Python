@@ -3,6 +3,7 @@ import win32com.client as win32
 import os
 import json
 from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button
+import subprocess
 
 
 # Sabitler
@@ -17,8 +18,8 @@ header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
 idx = None
 item_value = None  # seçili rengin hex kodu
-sheet_metals_path="milJsonFiles/sacSil.json"
-colors_path="milJsonFiles/renkler.json"
+sheet_metals_path=r"\\SRV1\planlama\milApp\milJsonFiles\sacSil.json"
+colors_path=r"\\SRV1\planlama\milApp\milJsonFiles\renkler.json"
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
 
@@ -134,8 +135,8 @@ def apply_colors(text):
 
             for color, keywords in colors.items():
                 for keyword in keywords:
-                    # Anahtar kelimeleri - ile böl
-                    parts = keyword.lower().split("-")
+                    # Anahtar kelimeleri * ile böl
+                    parts = keyword.lower().split("*")
                     # Bölünen parçaların hepsinin values[1]'de olup olmadığını kontrol et
                     if all(part in keyword_to_search for part in parts):
                         rgb_color = color
@@ -169,7 +170,7 @@ def create_excel():
 
     else:
         warning_label.destroy()  # Label'ı kaldır
-        approval_label.config(text="Excel oluşturuluyor...")
+        approval_label.config(text="Excel ve Pdf oluşturuluyor...")
         create_buttona.config(state="disabled")
         item_place(approval_label, 0.5, 0.1)
         root.update()  # Arayüzü güncelle
@@ -185,7 +186,7 @@ def create_excel():
             result = apply_colors(copied_text)
             # Yeni veriyi kopyala
             create_excelfn(result)
-        approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
+        approval_label.config(text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
         item_place(approval_label, 0.5, 0.4)
 
 # Excel dosyasını oluşturmak için fonksiyon
@@ -301,8 +302,17 @@ def create_excelfn(copied_text):
 
     # A2'de "Notlar" yazısını ekleyin
     add_notes_title(worksheet)
-
+    worksheet.PageSetup.Zoom = False # ölçeklendirme seçeneğini iptal et
+    worksheet.PageSetup.FitToPagesWide = 1 # genişliği bir sayfaya sığdır
+    worksheet.PageSetup.FitToPagesTall = False # yüksekliği otomatik ayarla    workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
+    # Define the PDF file path with the same name as the Excel file
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
+
+    pdf_file_path = os.path.splitext(excel_file_path)[0] + ".pdf"
+
+    # Export the Excel worksheet as a PDF
+    worksheet.ExportAsFixedFormat(0, pdf_file_path)
+    subprocess.Popen([pdf_file_path], shell=True)
 
     forget()
 
@@ -342,6 +352,16 @@ def handle_home_button():
     liste.delete(*liste.get_children())
     add_color_button.place_forget()
     add_color_entry.place_forget()
+    add_color_label.place_forget()
+    remove_color_button.place_forget()
+    add_button.config(state="disabled")
+    add_color_button.config(state="disabled")
+    add_color_entry.delete(0, 'end')
+    add_entry.delete(0, 'end')
+
+
+
+
 def handle_settings_button():
     forget()
     item_place(home_button, 0.9, 0.1)
@@ -390,8 +410,8 @@ def handle_sheet_remove_button():
 
     item_place(settings_label, 0.52, 0.1)
     item_place(remove_button, 0.65, 0.9)
-    item_place(add_button, 0.25, 0.5)
-    item_place(add_entry, 0.25, 0.4)
+    item_place(add_button, 0.22, 0.5)
+    item_place(add_entry, 0.22, 0.4)
 
 
 def add_item_to_json(json_file, item, key):
@@ -596,6 +616,8 @@ def handle_add_color_button():
         root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
         add_color_entry.delete(0, 'end')
+        add_color_entry.config(state="disabled")
+
         update_list_with_index(liste, colors_path, idx)
 
     elif result == "Öğe zaten ekli.":
@@ -706,9 +728,10 @@ def on_select_color(event):
 
     # Widget'ları düzenle
     place_list(liste, 0.4, 0.2, 0.5, 0.6)
-    item_place(add_color_button, 0.25, 0.5)
-    item_place(add_color_entry, 0.25, 0.4)
+    item_place(add_color_button, 0.22, 0.5)
+    item_place(add_color_entry, 0.22, 0.4)
     item_place(remove_color_button, 0.65, 0.9)    
+    item_place(add_color_label,0.22, 0.70)
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
     liste.heading("#1", text="Renkler")
     color_liste.place_forget()
@@ -745,7 +768,8 @@ create_buttona = generate_create_button(
 
 product_name_label = create_label_with_style(
     root, "Ürün Adı:", "Custom.TLabel")
-
+add_color_label=create_label_with_style(
+    root, "Eğer bir satırda birden fazla kelimenin \neşleşmesini istiyorsanız kelime aralarına \n* koyun. Örnek: gözet*cam", "Note.TLabel")
 approval_label = create_label_with_style(root, "", "GreenApproval.TLabel")
 
 settings_label = create_label_with_style(root, "", "b.TLabel")
@@ -803,3 +827,4 @@ def place():
 place()
 # Tkinter penceresini başlat
 root.mainloop()
+#pyinstaller --onefile --noconsole --name Mil --icon=mil_icon.ico app.py
