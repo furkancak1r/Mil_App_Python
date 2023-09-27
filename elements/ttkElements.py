@@ -45,6 +45,18 @@ def create_add_button(root, command_function, add_entry):
 
     return add_button
 
+def create_add_color_button(root, command_function, add_color_entry):
+    add_color_button = create_button(root, "Ekle", command_function)
+    add_color_button.config(state="disabled")
+
+    def add_check_and_enable_button(event):
+        add_color_entry_text = add_color_entry.get()
+        add_color_button.config(state="normal" if add_color_entry_text else "disabled")
+
+    add_color_entry.bind("<KeyRelease>", add_check_and_enable_button)
+
+    return add_color_button
+
 
 def generate_create_button(root, create_excel, product_name_entry, order_number_entry, excel_product_count_entry):
     create_buttona = create_button(root, "Oluştur", create_excel)

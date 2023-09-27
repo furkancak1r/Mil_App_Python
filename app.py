@@ -2,7 +2,7 @@ import tkinter as tk
 import win32com.client as win32
 import os
 import json
-from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste,create_liste,create_yscrollbar,create_root
+from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button
 
 
 # Sabitler
@@ -15,7 +15,8 @@ EXCEL_HORIZONTAL_ALIGNMENT_CENTER = -4108
 # Excel başlık verileri
 header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
-
+idx = None
+item_value = None  # seçili rengin hex kodu
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
 
@@ -185,7 +186,6 @@ def create_excel():
         approval_label.config(text="Excel oluşturuldu!")  # Sonucu göster
         item_place(approval_label, 0.5, 0.4)
 
-
 # Excel dosyasını oluşturmak için fonksiyon
 
 
@@ -325,7 +325,6 @@ def forget():
     root.update()
 
 
-
 def handle_home_button():
     home_button.place_forget()
     place()
@@ -422,9 +421,7 @@ def add_item_to_json(json_file, item, key):
     else:
         return "Veri alınamadı."
 
-# handle_add_button fonksiyonunu kullanırken konsola yazdırmayı unutmayın
-
-
+# sac ekleme için
 def handle_add_button():
     # Kullanıcıdan girdiyi alın
     item = add_entry.get()
@@ -450,6 +447,7 @@ def handle_add_button():
     elif result == "Öğe zaten ekli.":
         warning_label.config(text=result, style="RedWarning.TLabel")
         item_place(warning_label, 0.25, 0.3)
+        add_entry.delete(0, 'end')
         # 1.5 saniye sonra warning_label'ı gizle
         root.after(1500, lambda: warning_label.place_forget())
     else:
@@ -533,15 +531,97 @@ def handle_colors_button():
     place_list(color_liste, 0.25, 0.25, 0.5, 0.6)
 
 
-
-
 def extract_last_digit_from_item_id(item_id):
     # item_id'den son karakteri alın ve tamsayıya dönüştürün
     last_digit = int(item_id[-1])
-    return last_digit
+    return last_digit-1  # arrayin 0'dan başlaması dolayısıyla 1 çıkarıldı
+
+
+def add_item_to_json_with_index(json_file, item):
+
+    # JSON verisini alın
+    data = fetch_json_data(json_file)
+
+    if data is not None:
+        if "colors" in data and isinstance(data["colors"], dict):
+            color_dict = data["colors"]
+
+            if idx is None or idx < 0 or idx >= len(color_dict):
+                return "Geçersiz öğe sırası."
+
+            color_keys = list(color_dict.keys())
+            color_key_to_add = color_keys[idx]
+
+            if isinstance(color_dict[color_key_to_add], list):
+                if item not in color_dict[color_key_to_add]:
+                    color_dict[color_key_to_add].append(item)
+
+                    # JSON dosyasına güncellenmiş veriyi yazın (UTF-8 kodlaması kullanarak)
+                    try:
+                        with open(json_file, 'w', encoding='utf-8') as file:
+                            json.dump(data, file, indent=4, ensure_ascii=False)
+                        return "Öğe başarıyla eklendi!"
+                    except Exception as e:
+                        return f"Hata oluştu: {str(e)}"
+                else:
+                    return "Öğe zaten ekli."
+            else:
+                return "Belirtilen anahtar bir liste içermiyor."
+        else:
+            return "colors anahtarı bulunamadı veya bir sözlük değil."
+    else:
+        return "Veri alınamadı."
+
+
+def handle_add_color_button():
+    # Kullanıcıdan girdiyi alın
+    item = add_color_entry.get()
+    warning_label.place_forget()
+    approval_label.place_forget()
+
+    # JSON dosyasına item'i ekleyin (örneğin, 'sacSil.json' dosyasına ekleyin)
+    json_file = 'milJsonFiles/renkler.json'  # JSON dosyasının adını buraya ekleyin
+
+    result = add_item_to_json_with_index(json_file, item)
+
+    # Kullanıcıya işlem sonucunu gösterin
+    if result == "Öğe başarıyla eklendi!":
+        approval_label.config(text=result, style="GreenApproval.TLabel")
+        item_place(approval_label, 0.25, 0.3)
+        # 1.5 saniye sonra approval_label'ı gizle
+        root.after(1500, lambda: approval_label.place_forget())
+        # Girdi alanını temizle
+        add_color_entry.delete(0, 'end')
+        update_list_with_index(liste, 'milJsonFiles/renkler.json', idx)
+
+    elif result == "Öğe zaten ekli.":
+        warning_label.config(text=result, style="RedWarning.TLabel")
+        item_place(warning_label, 0.25, 0.3)
+        add_color_entry.delete(0, 'end')
+        # 1.5 saniye sonra warning_label'ı gizle
+        root.after(1500, lambda: warning_label.place_forget())
+    else:
+        warning_label.config(text=result, style="RedWarning.TLabel")
+        item_place(warning_label, 0.25, 0.3)
+
+
+def update_list_with_index(listbox, json_file, idx):
+    response = fetch_json_data(json_file)
+    if idx >= 0 and idx < len(response["colors"]):
+        idx_key_value_array = list(response["colors"].values())[idx]
+        update_list(listbox, idx_key_value_array)
+        if item_value:
+            # Tüm satırların arka plan rengini ayarla
+            for row in listbox.get_children():
+                listbox.item(row, tags=(item_value))
+                listbox.tag_configure(item_value, background=item_value)
+    else:
+        print("Geçersiz İndeks")
 
 
 def on_select_color(event):
+    global idx  # idx'i global değişken olarak tanımla
+    global item_value
     # Olayın kaynağı olan liste widget'ını al
     color_liste = event.widget
 
@@ -550,7 +630,6 @@ def on_select_color(event):
     if item_id is None:
         return None
 
-    response = fetch_json_data('milJsonFiles/renkler.json')
     idx = extract_last_digit_from_item_id(item_id)
 
     # Önceki sorgudan kalan arka plan rengini temizle
@@ -560,31 +639,24 @@ def on_select_color(event):
     # Seçili öğenin değerini al
     item_value = color_liste.item(item_id)['values'][0]
 
-    # 3. veriyi bul ve konsola yazdır
-    if idx >= 0 and idx < len(response["colors"]):
-        idx_key_value_array = list(response["colors"].values())[idx]
-        update_list(liste, idx_key_value_array)
-    else:
-        print("Geçersiz İndeks")
-    # Tüm satırların arka plan rengini ayarla
-    for row in liste.get_children():
-        liste.item(row, tags=(item_value))
-        liste.tag_configure(item_value, background=item_value)
+    # İndekse göre liste güncellemesini yap
+    update_list_with_index(liste, 'milJsonFiles/renkler.json', idx)
 
     # Widget'ları düzenle
     place_list(liste, 0.4, 0.2, 0.5, 0.6)
+    item_place(add_color_button, 0.25, 0.5)
+    item_place(add_color_entry, 0.25, 0.4)
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
     liste.heading("#1", text="Renkler")
     color_liste.place_forget()
-
-
-
 
 
 # Tkinter penceresini oluştur
 root = create_root()
 order_number_entry = create_entry(root, "order_number_entry")
 product_name_entry = create_entry(root, "product_name_entry")
+add_color_entry = create_entry(root, "add_color_entry")
+
 add_entry = create_entry(root, "add_entry")
 
 order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
@@ -594,7 +666,11 @@ excel_product_count_entry = create_entry(root, "excel_product_count_entry")
 home_button = create_button(root, "🏠", handle_home_button, False)
 settings_button = create_button(root, "⚙️", handle_settings_button, False)
 add_button = create_add_button(root, handle_add_button, add_entry)
+add_color_button = create_add_color_button(
+    root, handle_add_color_button, add_color_entry)
+
 remove_button = create_button(root, "Kaldır", handle_remove_button, True)
+
 colors_button = create_button(root, "Renkler", handle_colors_button, True)
 sheet_remove_button = create_button(
     root, "Sac Silme", handle_sheet_remove_button, True)
@@ -634,7 +710,8 @@ def listfn(root):
     if response is not None:
         words_to_remove = response.get("words_to_remove")
         if words_to_remove:
-            liste = create_liste(root, words_to_remove, "Sac Sil Kelimeler",selectItem)
+            liste = create_liste(root, words_to_remove,
+                                 "Sac Sil Kelimeler", selectItem)
             return liste
     return None
 
