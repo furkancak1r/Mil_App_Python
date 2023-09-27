@@ -342,7 +342,6 @@ def handle_home_button():
     liste.delete(*liste.get_children())
     add_color_button.place_forget()
     add_color_entry.place_forget()
-
 def handle_settings_button():
     forget()
     item_place(home_button, 0.9, 0.1)
@@ -372,6 +371,8 @@ def selectItem(liste):
 
     # Seçilen öğenin değerini döndür
     return item_value
+
+
 
 
 def handle_sheet_remove_button():
@@ -621,6 +622,64 @@ def update_list_with_index(listbox, json_file, idx):
     else:
         print("Geçersiz İndeks")
 
+def remove_item_by_color_index(json_file, index, item):
+    try:
+        data = fetch_json_data(json_file)  # JSON verisini al
+        if data is None:
+            return "Veri okunamadı veya hata oluştu."
+
+        # Verinin "colors" bölümündeki sıralama indeksine göre erişin
+        color_indices = list(data["colors"].keys())
+        if index < 0 or index >= len(color_indices):
+            return "Geçersiz sıralama indeksi."
+
+        color_index = color_indices[index]
+        
+        if item in data["colors"][color_index]:
+            data["colors"][color_index].remove(item)
+
+            with open(json_file, 'w', encoding='utf-8') as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)
+
+            return f"Öğe '{item}' başarıyla silindi."
+        else:
+            return f"Öğe '{item}' bulunamadı veya silinemedi."
+    except Exception as e:
+        return f"Hata oluştu: {str(e)}"
+
+
+
+def handle_remove_color_button():
+    selected_item = selectItem(liste)
+    warning_label.place_forget()
+    approval_label.place_forget()
+
+    if selected_item:
+        json_file = colors_path
+        color_index = idx  # Seçilen öğe, renk indeksi olarak kullanılacak
+        result = remove_item_by_color_index(json_file, color_index, selected_item)
+
+        if result == f"Öğe '{selected_item}' başarıyla silindi.":
+            approval_label.config(text=result, style="GreenApproval.TLabel")
+            item_place(approval_label, 0.25, 0.3)
+            # 1.5 saniye sonra approval_label'ı gizle
+            root.after(1500, lambda: approval_label.place_forget())
+
+            response = fetch_json_data(json_file)
+            idx_key_value_array = list(response["colors"].values())[idx]
+            update_list(liste, idx_key_value_array)
+        else:
+            warning_label.config(text=result, style="RedWarning.TLabel")
+            item_place(warning_label, 0.25, 0.3)
+            # 1.5 saniye sonra warning_label'ı gizle
+            root.after(1500, lambda: warning_label.place_forget())
+    else:
+        warning_label.config(
+            text="Lütfen listeden öğe seçiniz.", style="RedWarning.TLabel")
+        item_place(warning_label, 0.25, 0.3)
+        # 1.5 saniye sonra warning_label'ı gizle
+        root.after(1500, lambda: warning_label.place_forget())
+
 
 def on_select_color(event):
     global idx  # idx'i global değişken olarak tanımla
@@ -649,6 +708,7 @@ def on_select_color(event):
     place_list(liste, 0.4, 0.2, 0.5, 0.6)
     item_place(add_color_button, 0.25, 0.5)
     item_place(add_color_entry, 0.25, 0.4)
+    item_place(remove_color_button, 0.65, 0.9)    
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
     liste.heading("#1", text="Renkler")
     color_liste.place_forget()
@@ -673,6 +733,8 @@ add_color_button = create_add_color_button(
     root, handle_add_color_button, add_color_entry)
 
 remove_button = create_button(root, "Kaldır", handle_remove_button, True)
+remove_color_button = create_button(root, "Kaldır", handle_remove_color_button, True)
+
 
 colors_button = create_button(root, "Renkler", handle_colors_button, True)
 sheet_remove_button = create_button(

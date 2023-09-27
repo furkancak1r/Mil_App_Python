@@ -1,42 +1,65 @@
 {
-  "colors": {
-    "8696052": ["orfis", "kangal", "kılcal", "exp", "valf", "evaporat"],
-    "11992832": [
-      "kondenser",
-      "kompresör",
-      "izolasyon",
-      "klima",
-      "bakır tel",
-      "bas-sw",
-      "likit",
-      "dray",
-      "gaz",
-      "gözet-cam",
-      "subap"
-    ],
-    "65535": [
-      "dixell",
-      "işlemci",
-      "kontrol cihazı",
-      "kablo",
-      "klem",
-      "swich",
-      "otomat",
-      "sigorta",
-      "kontaktör",
-      "rezistans",
-      "kumanda",
-      "prob",
-      "eliwell",
-      "adapt",
-      "fiş",
-      "priz",
-      "röle",
-      "termometre"
-    ],
-    "13408767": ["kanop", "stickled", "led"],
-    "14395790": ["profil", "eloksallı"],
-    "9359529": ["cam", "ayna", "çerçeve", "kapı", "lex", "ol-takım"],
-    "10092441": ["fan"]
-  }
+    "colors": {
+        "8696052": [
+            "orfis",
+            "kangal",
+            "kılcal",
+            "exp",
+            "valf",
+            "evaporat"
+        ],
+        "11992832": [
+            "kondenser",
+            "kompresör",
+            "izolasyon",
+            "klima",
+            "bakır tel",
+            "bas-sw",
+            "likit",
+            "dray",
+            "gaz",
+            "gözet-cam",
+            "subap"
+        ],
+        "65535": [
+            "dixell",
+            "işlemci",
+            "kontrol cihazı",
+            "kablo",
+            "klem",
+            "swich",
+            "otomat",
+            "sigorta",
+            "kontaktör",
+            "rezistans",
+            "kumanda",
+            "prob",
+            "eliwell",
+            "adapt",
+            "fiş",
+            "priz",
+            "röle",
+            "termometre"
+        ],
+        "13408767": [
+            "kanop",
+            "stickled",
+            "led"
+        ],
+        "14395790": [
+            "profil",
+            "eloksallı"
+        ],
+        "9359529": [
+            "cam",
+            "ayna",
+            "çerçeve",
+            "kapı",
+            "lex",
+            "ol-takım"
+        ],
+        "10092441": [
+            "fan"
+        ]
+    }
 }
