@@ -2,9 +2,7 @@ import tkinter as tk
 import win32com.client as win32
 import os
 import json
-from tkinter import ttk
-from ttkthemes import ThemedTk
-from elements.elements import create_button, create_add_button, generate_create_button, item_place
+from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste,create_liste,create_yscrollbar,create_root
 
 
 # Sabitler
@@ -327,35 +325,6 @@ def forget():
     root.update()
 
 
-def create_root():
-    root = ThemedTk(theme='adapta', themebg=True)
-    window_width = 600
-    window_height = 400
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    root.resizable(False, False)
-
-    # Pencereyi ekranın ortasına konumlandır
-    x = (screen_width - window_width) // 2
-    y = (screen_height - window_height-150) // 2
-    root.geometry(f"{window_width}x{window_height}+{x}+{y}")
-    root.minsize(window_width, window_height)  # Minimum boyutu ayarla
-
-    root.title("Mil Excel & Pdf Oluşturma")
-    return root
-
-
-def create_warning_label(root):
-    # Kırmızı renkli bir stil oluştur
-    style = ttk.Style()
-
-    # Stili yalnızca warning_label için kullanmak için stil adına özel bir etiket stili tanımlayın
-    style.configure("RedWarning.TLabel", foreground="red")
-
-    # Stili uygulanan bir Label widget'ı oluştur
-    warning_label = ttk.Label(root, text="", style="RedWarning.TLabel")
-    return warning_label
-
 
 def handle_home_button():
     home_button.place_forget()
@@ -412,7 +381,7 @@ def handle_sheet_remove_button():
     response = fetch_json_data('milJsonFiles/sacSil.json')
     words_to_remove = response["words_to_remove"]
     update_list(liste, words_to_remove)
-    liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
+    place_list(liste, 0.4, 0.2, 0.5, 0.6)
     # Bu, scrollbar'ın listenin içinde görünmesini sağlar
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
 
@@ -488,7 +457,6 @@ def handle_add_button():
         item_place(warning_label, 0.25, 0.3)
 
 
-
 def update_list(liste, list_items):
     # Liste üzerindeki mevcut öğelerin id'lerini al
     children = liste.get_children()
@@ -562,97 +530,9 @@ def handle_colors_button():
     settings_label.config(text="Renk Ayarı")
     item_place(settings_label, 0.5, 0.1)
 
-    color_liste.place(relx=0.25, rely=0.25, relwidth=0.5, relheight=0.6)
+    place_list(color_liste, 0.25, 0.25, 0.5, 0.6)
 
 
-def create_approval_label(root):
-    # Yeşil renkli bir stil oluştur
-    style = ttk.Style()
-
-    # Stili yalnızca approval_label için kullanmak için stil adına özel bir etiket stili tanımlayın
-    style.configure("GreenApproval.TLabel", foreground="green")
-
-    # Stili uygulanan bir Label widget'ı oluştur
-    approval_label = ttk.Label(root, text="", style="GreenApproval.TLabel")
-    return approval_label
-
-
-def set_font_style():
-    style = ttk.Style()
-    style.configure("Custom.TLabel", font=(12))
-    return style
-
-
-def create_product_name_label(root):
-    style = set_font_style()
-    # Varsayılan stil ile bir Label widget'ı oluştur
-    product_name_label = ttk.Label(
-        root, text="Ürün Adı:", style="Custom.TLabel")
-
-    return product_name_label
-
-
-def create_order_number_label(root):
-    # Varsayılan stil ile bir Label widget'ı oluştur
-    style = set_font_style()
-
-    order_number_label = ttk.Label(
-        root, text="Sipariş Numarası:", style="Custom.TLabel")
-    return order_number_label
-
-
-def create_excel_product_count_label(root):
-    style = set_font_style()
-
-    # Varsayılan stil ile bir Label widget'ı oluştur
-    excel_product_count_label = ttk.Label(
-        root, text="Ürün Adeti:", style="Custom.TLabel")
-    return excel_product_count_label
-
-
-def create_product_name_entry(root):
-    product_name_entry = ttk.Entry(root)
-    return product_name_entry
-
-
-def create_order_number_entry(root):
-    order_number_entry = ttk.Entry(root)
-    return order_number_entry
-
-
-def create_add_entry(root):
-    add_entry = ttk.Entry(root)
-    return add_entry
-
-
-def create_remove_sheet_metal_checkbox_entry(root):
-    # "Sac Sil" butonuna tıklanıp tıklanmadığını takip eden değişken
-    sac_sil_flag = tk.BooleanVar()
-    sac_sil_flag.set(False)  # Başlangıçta "Sac Sil" butonu işaretsiz
-
-    style = ttk.Style()
-    # Segoe UI fontu ve 12 punto olarak ayarla
-    style.configure("Custom.TCheckbutton", font=("Segoe UI", 12))
-
-    remove_sheet_metal_checkbox = ttk.Checkbutton(
-        root, text="Sac Sil", variable=sac_sil_flag, style="Custom.TCheckbutton")
-
-    return remove_sheet_metal_checkbox, sac_sil_flag
-
-
-def create_liste(root, list_items, text_header):
-    # Liste penceresini oluştur (show parametresini "headings" olarak ayarla)
-    liste = ttk.Treeview(root, columns=("Veriler"), show="headings", height=10)
-    liste.heading("#1", text=text_header)
-
-    # Liste öğelerini liste üzerinde görüntüle
-    for item in list_items:
-        liste.insert("", "end", values=(item))
-
-    # Öğe seçildiğinde çağrılacak işlevi tanımla
-    liste.bind("<<TreeviewSelect>>", lambda event: selectItem(liste))
-
-    return liste
 
 
 def extract_last_digit_from_item_id(item_id):
@@ -692,73 +572,24 @@ def on_select_color(event):
         liste.tag_configure(item_value, background=item_value)
 
     # Widget'ları düzenle
-    liste.place(relx=0.4, rely=0.2, relwidth=0.5, relheight=0.6)
+    place_list(liste, 0.4, 0.2, 0.5, 0.6)
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
     liste.heading("#1", text="Renkler")
     color_liste.place_forget()
 
 
-def create_color_liste(root):
-    # Tkinter penceresi oluşturun
-    color_codes = ['#F4B084', '#00FFB6', '#FFFF00',
-                   '#FF99CC', '#8AA9DB', '#A9D08E', '#99FF99']
 
-    # Liste penceresini oluştur (show parametresini "headings" olarak ayarla)
-    color_liste = ttk.Treeview(root, columns=(
-        "Renkler"), show="headings", height=len(color_codes))
-    color_liste.heading("#1", text="Renkler")
-
-    # Liste öğelerini liste üzerinde görüntüle
-    for color_code in color_codes:
-        # Renk kodunu kullanarak arka plan rengini ayarlayın
-        color_liste.insert("", "end", values=(color_code), tags=(color_code))
-        color_liste.tag_configure(color_code, background=color_code)
-
-    # Öğe seçildiğinde çağrılacak işlevi tanımla
-    color_liste.bind("<<TreeviewSelect>>", on_select_color)
-
-    return color_liste
-
-
-def create_yscrollbar(root, liste):
-    yscrollbar = ttk.Scrollbar(root, orient="vertical", command=liste.yview)
-    liste.configure(yscrollcommand=yscrollbar.set)
-    return yscrollbar
-
-
-def create_excel_product_count_entry(root):
-    def validate_input(P):
-        # Kullanıcının girdiği değeri değerlendir
-        if P == "" or P.isdigit():
-            return True
-        else:
-            return False
-
-    vcmd = root.register(validate_input)
-    excel_product_count_entry = ttk.Entry(
-        root, validate="key", validatecommand=(vcmd, "%P"))
-    return excel_product_count_entry
-
-
-def create_settings_label(root):
-    # Özel stil ile bir Label widget'ı oluştur
-    style = ttk.Style()
-    style.configure("b.TLabel", font=("Segoe UI", 18))
-
-    settings_label = ttk.Label(root, text="", style="b.TLabel")
-    return settings_label
 
 
 # Tkinter penceresini oluştur
 root = create_root()
-add_entry = create_add_entry(root)
-# Excel dosyası adı için
-product_name_entry = create_product_name_entry(root)
-# Sipariş numarası için giriş alanı
-order_number_entry = create_order_number_entry(root)
+order_number_entry = create_entry(root, "order_number_entry")
+product_name_entry = create_entry(root, "product_name_entry")
+add_entry = create_entry(root, "add_entry")
+
 order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
 # Excel Ürün adeti için giriş alanı
-excel_product_count_entry = create_excel_product_count_entry(root)
+excel_product_count_entry = create_entry(root, "excel_product_count_entry")
 
 home_button = create_button(root, "🏠", handle_home_button, False)
 settings_button = create_button(root, "⚙️", handle_settings_button, False)
@@ -771,27 +602,31 @@ create_buttona = generate_create_button(
     root, create_excel, product_name_entry, order_number_entry, excel_product_count_entry)
 
 
+product_name_label = create_label_with_style(
+    root, "Ürün Adı:", "Custom.TLabel")
+
+approval_label = create_label_with_style(root, "", "GreenApproval.TLabel")
+
+settings_label = create_label_with_style(root, "", "b.TLabel")
+
 # Uyarı etiketleri
-warning_label = create_warning_label(root)
-approval_label = create_approval_label(root)
+warning_label = create_label_with_style(root, "", "RedWarning.TLabel")
 
-# Sipariş numarası için etiket
-order_number_label = create_order_number_label(root)
 
-# Ürün adı için etiket
-product_name_label = create_product_name_label(root)
+excel_product_count_label = create_label_with_style(
+    root, "Ürün Adeti:", "Custom.TLabel")
 
-# Excel Ürün adeti labelı
-excel_product_count_label = create_excel_product_count_label(root)
+order_number_label = create_label_with_style(
+    root, "Sipariş Numarası:", "Custom.TLabel")
 
-color_liste = create_color_liste(root)
+
+color_liste = create_color_liste(root, on_select_color)
 
 
 # "Sac Sil" butonunu ve durumunu al
 remove_sheet_metal_checkbox, sac_sil_flag = create_remove_sheet_metal_checkbox_entry(
     root)
 # Ayarlar etkieti
-settings_label = create_settings_label(root)
 
 
 def listfn(root):
@@ -799,7 +634,7 @@ def listfn(root):
     if response is not None:
         words_to_remove = response.get("words_to_remove")
         if words_to_remove:
-            liste = create_liste(root, words_to_remove, "Sac Sil Kelimeler")
+            liste = create_liste(root, words_to_remove, "Sac Sil Kelimeler",selectItem)
             return liste
     return None
 
