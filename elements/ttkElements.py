@@ -1,8 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 from ttkthemes import ThemedTk
+from tkinter.scrolledtext import ScrolledText
+
 
 """ROOT"""
+
+
 def create_root():
     root = ThemedTk(theme='adapta', themebg=True)
     window_width = 600
@@ -21,8 +25,8 @@ def create_root():
     return root
 
 
-
 """BUTTONS"""
+
 
 def create_button(parent, text, command_function, check_style=True):
     style = ttk.Style()
@@ -45,13 +49,15 @@ def create_add_button(root, command_function, add_entry):
 
     return add_button
 
+
 def create_add_color_button(root, command_function, add_color_entry):
     add_color_button = create_button(root, "Ekle", command_function)
     add_color_button.config(state="disabled")
 
     def add_check_and_enable_button(event):
         add_color_entry_text = add_color_entry.get()
-        add_color_button.config(state="normal" if add_color_entry_text else "disabled")
+        add_color_button.config(
+            state="normal" if add_color_entry_text else "disabled")
 
     add_color_entry.bind("<KeyRelease>", add_check_and_enable_button)
 
@@ -75,7 +81,10 @@ def generate_create_button(root, create_excel, product_name_entry, order_number_
 
     return create_buttona
 
+
 """PLACE"""
+
+
 def item_place(item, relx, rely):
     item.place(relx=relx, rely=rely, anchor="center")
 
@@ -85,19 +94,22 @@ def place_list(liste, relx, rely, relwidth, relheight):
 
 
 """LABEL"""
+
+
 def create_label_with_style(parent, text, style_name):
     style = ttk.Style()
     style.configure("RedWarning.TLabel", foreground="red")
     style.configure("b.TLabel", font=("Segoe UI", 18))
     style.configure("GreenApproval.TLabel", foreground="green")
     style.configure("Custom.TLabel", font=("Segoe UI", 12))
-    style.configure("Note.TLabel", font=("Segoe UI", 8),foreground="grey")
-
+    style.configure("Note.TLabel", font=("Segoe UI", 8), foreground="grey")
 
     label = ttk.Label(parent, text=text, style=style_name)
     return label
 
+
 """ENTRY"""
+
 def create_entry(root, entry_name):
     def validate_input(P):
         if P == "" or P.isdigit():
@@ -111,11 +123,14 @@ def create_entry(root, entry_name):
     else:
         validate = None
         validatecommand = None
-    
-    entry = ttk.Entry(root, name=entry_name, validate=validate, validatecommand=validatecommand)
+    entry = ttk.Entry(root, name=entry_name, validate=validate,
+                      validatecommand=validatecommand)
     return entry
 
+
 """CHECKBUTTON"""
+
+
 def create_remove_sheet_metal_checkbox_entry(root):
     # "Sac Sil" butonuna tıklanıp tıklanmadığını takip eden değişken
     sac_sil_flag = tk.BooleanVar()
@@ -130,8 +145,11 @@ def create_remove_sheet_metal_checkbox_entry(root):
 
     return remove_sheet_metal_checkbox, sac_sil_flag
 
+
 """LISTS"""
-def create_color_liste(root,on_select_color):
+
+
+def create_color_liste(root, on_select_color):
     # Tkinter penceresi oluşturun
     color_codes = ['#F4B084', '#00FFB6', '#FFFF00',
                    '#FF99CC', '#8AA9DB', '#A9D08E', '#99FF99']
@@ -152,7 +170,8 @@ def create_color_liste(root,on_select_color):
 
     return color_liste
 
-def create_liste(root, list_items, text_header,selectItem):
+
+def create_liste(root, list_items, text_header, selectItem):
     # Liste penceresini oluştur (show parametresini "headings" olarak ayarla)
     liste = ttk.Treeview(root, columns=("Veriler"), show="headings", height=10)
     liste.heading("#1", text=text_header)
@@ -166,8 +185,32 @@ def create_liste(root, list_items, text_header,selectItem):
 
     return liste
 
+
 """SCROLLBAR"""
+
+
 def create_yscrollbar(root, liste):
     yscrollbar = ttk.Scrollbar(root, orient="vertical", command=liste.yview)
     liste.configure(yscrollcommand=yscrollbar.set)
     return yscrollbar
+
+"""SCROLLEDTEXT"""
+
+def create_scrolled_text(root,scrolled_text_name,width,height):
+    scrolled_text_name = ScrolledText(root, width=width,  height=height, fg="grey")
+    scrolled_text_name.insert(tk.END, "Sipariş notları..")
+
+    def clear_text(event):
+        if not scrolled_text_name.get("1.0", tk.END).strip() or scrolled_text_name.get("1.0", tk.END).strip() == "Sipariş notları..":
+            scrolled_text_name.delete("1.0", tk.END)
+            scrolled_text_name.config(fg="black")
+
+
+    def put_text(event):
+        if not scrolled_text_name.get("1.0", tk.END).strip():
+            scrolled_text_name.insert(tk.END, "Sipariş notları..")
+            scrolled_text_name.config(fg="grey")
+
+    scrolled_text_name.bind("<FocusIn>", clear_text)
+    scrolled_text_name.bind("<FocusOut>", put_text)
+    return scrolled_text_name

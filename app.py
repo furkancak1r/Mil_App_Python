@@ -2,7 +2,7 @@ import tkinter as tk
 import win32com.client as win32
 import os
 import json
-from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button
+from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button, create_scrolled_text
 import subprocess
 
 
@@ -18,28 +18,42 @@ header = ["Malzeme Kodu", "Malzeme Açıklaması",
           "Birim Sarf Miktarı", "Toplam Sarf Miktarı", "Birim"]
 idx = None
 item_value = None  # seçili rengin hex kodu
-sheet_metals_path=r"\\SRV1\planlama\milApp\milJsonFiles\sacSil.json"
-colors_path=r"\\SRV1\planlama\milApp\milJsonFiles\renkler.json"
+sheet_metals_path = r"\\SRV1\planlama\milApp\milJsonFiles\sacSil.json"
+colors_path = r"\\SRV1\planlama\milApp\milJsonFiles\renkler.json"
 # A2'de "Notlar" yazısını ekleyen fonksiyon
 
 
-def add_notes_title(worksheet):
+def add_notes_title(excel, worksheet, order_notes):
     worksheet_range = worksheet.Range
     worksheet_cells = worksheet.Cells
 
     worksheet_cells(2, 1).Value = "Notlar"
     worksheet_cells(2, 1).Font.Bold = True
-    worksheet_cells(2, 1).HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
+    # EXCEL_TEXT_ALIGNMENT_CENTER için değeri 3
+    worksheet_cells(2, 1).HorizontalAlignment = 3
 
     worksheet_cells(2, 4).Value = "Ürün Adeti"
     worksheet_cells(2, 4).Font.Bold = True
-    worksheet_cells(2, 4).HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
+    # EXCEL_TEXT_ALIGNMENT_CENTER için değeri 3
+    worksheet_cells(2, 4).HorizontalAlignment = 3
 
-    worksheet_range("B2:C2").Merge()
+    # B2 ve C2 hücrelerini birleştir
+    merge_range = worksheet_range("B2:C2")
+    merge_range.Merge()
+
+    # Eğer order_notes "Sipariş notları.." değilse
+    if order_notes != "Sipariş notları..":
+        # Birleştirilen hücreye order_notes ekleyin
+        merge_range.Value = order_notes
+        merge_range.WrapText = True
+        worksheet.Rows[2].RowHeight = 185
+    else:
+        # Eğer order_notes "Sipariş notları.." ise yüksekliği ayarla
+
+        worksheet.Rows[2].RowHeight = 100
+
 
 # A3'den D'deki en son satıra kadar olan hücrelere kenarlık eklemek için fonksiyon
-
-
 def add_border_to_range(worksheet, start_cell, end_cell):
     range_to_border = worksheet.Range(start_cell, end_cell)
     borders = range_to_border.Borders
@@ -77,6 +91,7 @@ def remove_selected_words(data):
 
     # Temizlenmiş veriyi birleştir ve döndür
     return "\n".join(cleaned_data)
+
 
 def validate_copied_text(copied_data):
     # Kopyalanan veriyi satırlara böl
@@ -157,6 +172,7 @@ def apply_colors(text):
     sorted_data_by_color = sort_data_by_color(result_excel_format)
     return sorted_data_by_color
 
+
 def validate_user_inputs(string):
     # Kullanılamayacak semboller listesi
     invalid_chars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
@@ -171,11 +187,11 @@ def validate_user_inputs(string):
     # Eğer bulunan listesi boş değilse
     if found_chars:
         # False ve bulunan listesini dön
-        return [False,found_chars]
+        return [False, found_chars]
     # Eğer bulunan listesi boşsa
     else:
         # True ve boş liste dön
-        return [True,[]]
+        return [True, []]
 
 
 def create_excel():
@@ -197,11 +213,38 @@ def create_excel():
     else:
         warning_label.place_forget()  # Label'ı kaldır
         order_name = order_number_entry.get()
-        current_directory =  os.path.expanduser("~/Desktop")
+        current_directory = os.path.expanduser("~/Desktop")
         product_name = product_name_entry.get()
         excel_product_count = excel_product_count_entry.get()
-        order_name_validate=validate_user_inputs(order_name)
-        product_name_validate=validate_user_inputs(product_name)
+        order_name_validate = validate_user_inputs(order_name)
+        product_name_validate = validate_user_inputs(product_name)
+        order_notes = notes_scrolled_text.get("1.0", "end").strip()
+
+        def excel_check():
+            approval_label.config(text="Excel ve Pdf oluşturuluyor...")
+            create_buttona.config(state="disabled")
+            item_place(approval_label, 0.5, 0.1)
+            root.update()  # Arayüzü güncelle
+
+            # Klasörü oluştur
+
+            if sac_sil_flag.get():  # Eğer sac sil seçiliyse
+                # Kopyalanan metinden belirtilen kelimeleri sil
+                cleaned_text = remove_selected_words(copied_text)
+                result = apply_colors(cleaned_text)
+
+                create_excelfn(result, order_name, product_name, excel_product_count,
+                               excel_file_path, order_notes)  # Temizlenmiş veri ile Excel oluştur
+            else:  # Eğer sac sil seçili değilse
+                # Kopyalanan metni olduğu gibi Excel'e yaz
+                # Veriyi temizle
+                result = apply_colors(copied_text)
+                # Yeni veriyi kopyala
+                create_excelfn(result, order_name, product_name,
+                               excel_product_count, excel_file_path, order_notes)
+            approval_label.config(
+                text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
+            item_place(approval_label, 0.5, 0.4)
 
         # Eğer order_name veya product_name içinde özel sembol varsa
         if not order_name_validate[0] or not product_name_validate[0]:
@@ -209,68 +252,49 @@ def create_excel():
             # Eğer order_name içinde özel sembol varsa
             if not order_name_validate[0]:
                 # Uyarı mesajında order_name ve bulunan semboller göster
-                warning_label.config(text=f"Sipariş numarasında kullanılamayacak semboller var: {', '.join(order_name_validate[1])}", style="RedWarning.TLabel")
+                warning_label.config(
+                    text=f"Sipariş numarasında kullanılamayacak semboller var: {', '.join(order_name_validate[1])}", style="RedWarning.TLabel")
                 item_place(warning_label, 0.5, 0.1)
 
-            
             # Eğer product_name içinde özel sembol varsa
             if not product_name_validate[0]:
                 # Uyarı mesajında product_name ve bulunan semboller göster
-                warning_label.config(text=f"Ürün adında kullanılamayacak semboller var: {', '.join(product_name_validate[1])}", style="RedWarning.TLabel")
+                warning_label.config(
+                    text=f"Ürün adında kullanılamayacak semboller var: {', '.join(product_name_validate[1])}", style="RedWarning.TLabel")
                 item_place(warning_label, 0.5, 0.1)
-
 
             return None
 
         # Klasör yolu oluşturun
         folder_path = os.path.join(current_directory, order_name)
+        excel_file_path = os.path.join(
+            current_directory, order_name, order_name+" "+product_name)  # Excel dosyasının tam yolu
+        pdf_file_path = os.path.splitext(excel_file_path)[0] + ".pdf"
+
         # Eğer klasör zaten varsa
         if os.path.exists(folder_path):
             # Uyarı mesajı göster
-            warning_label.config(text="Bu isimde bir klasör zaten var!", style="RedWarning.TLabel")
-        
-            item_place(warning_label, 0.5, 0.1)
-            return None
+            if os.path.exists(pdf_file_path) or os.path.exists(excel_file_path):
+                warning_label.config(
+                    text="Bu isimde excel veya pdf zaten var!", style="RedWarning.TLabel")
+                item_place(warning_label, 0.5, 0.1)
+                return None
         # Eğer klasör yoksa
+            excel_check()
+
         else:
-            approval_label.config(text="Excel ve Pdf oluşturuluyor...")
-            create_buttona.config(state="disabled")
-            item_place(approval_label, 0.5, 0.1)
-            root.update()  # Arayüzü güncelle
-
-            # Klasörü oluştur
             os.mkdir(folder_path)
-            excel_file_path = os.path.join(
-                current_directory, order_name, order_name+" "+product_name)  # Excel dosyasının tam yolu
 
-            if sac_sil_flag.get():  # Eğer sac sil seçiliyse
-                # Kopyalanan metinden belirtilen kelimeleri sil
-                cleaned_text = remove_selected_words(copied_text)
-                result = apply_colors(cleaned_text)
-
-                create_excelfn(result,order_name,product_name,excel_product_count,excel_file_path)  # Temizlenmiş veri ile Excel oluştur
-            else:  # Eğer sac sil seçili değilse
-                # Kopyalanan metni olduğu gibi Excel'e yaz
-                # Veriyi temizle
-                result = apply_colors(copied_text)
-                # Yeni veriyi kopyala
-                create_excelfn(result,order_name,product_name,excel_product_count,excel_file_path)
-            approval_label.config(text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
-            item_place(approval_label, 0.5, 0.4)
+            excel_check()
 
 # Excel dosyasını oluşturmak için fonksiyon
 
 
-def create_excelfn(copied_text,order_name,product_name,excel_product_count,excel_file_path):
+def create_excelfn(copied_text, order_name, product_name, excel_product_count, excel_file_path, order_notes):
 
     # Excel application'ı başlat
     excel = win32.gencache.EnsureDispatch('Excel.Application')
     excel.Visible = True  # Excel penceresini görünür yap
-
-
-
-
-
 
     # Excel dosyasını oluştur
     workbook = excel.Workbooks.Add()
@@ -287,7 +311,6 @@ def create_excelfn(copied_text,order_name,product_name,excel_product_count,excel
     worksheet.Range("A3:E3").HorizontalAlignment = EXCEL_TEXT_ALIGNMENT_CENTER
     worksheet.Range(
         "A3:E3").VerticalAlignment = EXCEL_VERTICAL_ALIGNMENT_CENTER
-    worksheet.Rows[2].RowHeight = 100  # 2. satırın yüksekliğini 100 yap
 
     # Ürün adetini E2 hücresine yaz ve fontu kalın yap
     worksheet.Cells(2, 5).Value = excel_product_count
@@ -365,10 +388,11 @@ def create_excelfn(copied_text,order_name,product_name,excel_product_count,excel
     worksheet.Columns.AutoFit()
 
     # A2'de "Notlar" yazısını ekleyin
-    add_notes_title(worksheet)
-    worksheet.PageSetup.Zoom = False # ölçeklendirme seçeneğini iptal et
-    worksheet.PageSetup.FitToPagesWide = 1 # genişliği bir sayfaya sığdır
-    worksheet.PageSetup.FitToPagesTall = False # yüksekliği otomatik ayarla    workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
+    add_notes_title(excel, worksheet, order_notes)
+    worksheet.PageSetup.Zoom = False  # ölçeklendirme seçeneğini iptal et
+    worksheet.PageSetup.FitToPagesWide = 1  # genişliği bir sayfaya sığdır
+    # yüksekliği otomatik ayarla    workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
+    worksheet.PageSetup.FitToPagesTall = False
     # Define the PDF file path with the same name as the Excel file
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
 
@@ -424,8 +448,6 @@ def handle_home_button():
     add_entry.delete(0, 'end')
 
 
-
-
 def handle_settings_button():
     forget()
     item_place(home_button, 0.9, 0.1)
@@ -455,8 +477,6 @@ def selectItem(liste):
 
     # Seçilen öğenin değerini döndür
     return item_value
-
-
 
 
 def handle_sheet_remove_button():
@@ -510,6 +530,8 @@ def add_item_to_json(json_file, item, key):
         return "Veri alınamadı."
 
 # sac ekleme için
+
+
 def handle_add_button():
     # Kullanıcıdan girdiyi alın
     item = add_entry.get()
@@ -708,6 +730,7 @@ def update_list_with_index(listbox, json_file, idx):
     else:
         print("Geçersiz İndeks")
 
+
 def remove_item_by_color_index(json_file, index, item):
     try:
         data = fetch_json_data(json_file)  # JSON verisini al
@@ -720,7 +743,7 @@ def remove_item_by_color_index(json_file, index, item):
             return "Geçersiz sıralama indeksi."
 
         color_index = color_indices[index]
-        
+
         if item in data["colors"][color_index]:
             data["colors"][color_index].remove(item)
 
@@ -734,7 +757,6 @@ def remove_item_by_color_index(json_file, index, item):
         return f"Hata oluştu: {str(e)}"
 
 
-
 def handle_remove_color_button():
     selected_item = selectItem(liste)
     warning_label.place_forget()
@@ -743,7 +765,8 @@ def handle_remove_color_button():
     if selected_item:
         json_file = colors_path
         color_index = idx  # Seçilen öğe, renk indeksi olarak kullanılacak
-        result = remove_item_by_color_index(json_file, color_index, selected_item)
+        result = remove_item_by_color_index(
+            json_file, color_index, selected_item)
 
         if result == f"Öğe '{selected_item}' başarıyla silindi.":
             approval_label.config(text=result, style="GreenApproval.TLabel")
@@ -794,8 +817,8 @@ def on_select_color(event):
     place_list(liste, 0.4, 0.2, 0.5, 0.6)
     item_place(add_color_button, 0.22, 0.5)
     item_place(add_color_entry, 0.22, 0.4)
-    item_place(remove_color_button, 0.65, 0.9)    
-    item_place(add_color_label,0.22, 0.70)
+    item_place(remove_color_button, 0.65, 0.9)
+    item_place(add_color_label, 0.22, 0.70)
     yscrollbar.place(in_=liste, relx=0.95, relheight=1.0)
     liste.heading("#1", text="Renkler")
     color_liste.place_forget()
@@ -806,12 +829,13 @@ root = create_root()
 order_number_entry = create_entry(root, "order_number_entry")
 product_name_entry = create_entry(root, "product_name_entry")
 add_color_entry = create_entry(root, "add_color_entry")
-
 add_entry = create_entry(root, "add_entry")
+excel_product_count_entry = create_entry(root, "excel_product_count_entry")
+
+notes_scrolled_text = create_scrolled_text(root, "notes_scrolled_text", 29, 16)
 
 order_number_entry.focus_set()  # order_number_entry'yi aktif hale getir
 # Excel Ürün adeti için giriş alanı
-excel_product_count_entry = create_entry(root, "excel_product_count_entry")
 
 home_button = create_button(root, "🏠", handle_home_button, False)
 settings_button = create_button(root, "⚙️", handle_settings_button, False)
@@ -820,8 +844,8 @@ add_color_button = create_add_color_button(
     root, handle_add_color_button, add_color_entry)
 
 remove_button = create_button(root, "Kaldır", handle_remove_button, True)
-remove_color_button = create_button(root, "Kaldır", handle_remove_color_button, True)
-
+remove_color_button = create_button(
+    root, "Kaldır", handle_remove_color_button, True)
 
 colors_button = create_button(root, "Renkler", handle_colors_button, True)
 sheet_remove_button = create_button(
@@ -832,7 +856,7 @@ create_buttona = generate_create_button(
 
 product_name_label = create_label_with_style(
     root, "Ürün Adı:", "Custom.TLabel")
-add_color_label=create_label_with_style(
+add_color_label = create_label_with_style(
     root, "Eğer bir satırda birden fazla kelimenin \neşleşmesini istiyorsanız kelime aralarına \n* koyun. Örnek: gözet*cam", "Note.TLabel")
 approval_label = create_label_with_style(root, "", "GreenApproval.TLabel")
 
@@ -877,18 +901,19 @@ if liste is not None:
 
 def place():
 
-    item_place(order_number_label, 0.35, 0.3)
-    item_place(order_number_entry, 0.6, 0.3)
-    item_place(product_name_label, 0.4, 0.4)
-    item_place(product_name_entry, 0.6, 0.4)
-    item_place(excel_product_count_label, 0.39, 0.5)
-    item_place(excel_product_count_entry, 0.6, 0.5)
-    item_place(remove_sheet_metal_checkbox, 0.5, 0.625)
-    item_place(create_buttona, 0.5, 0.75)
+    item_place(order_number_label, 0.15, 0.3)
+    item_place(order_number_entry, 0.4, 0.3)
+    item_place(product_name_label, 0.2, 0.4)
+    item_place(product_name_entry, 0.4, 0.4)
+    item_place(notes_scrolled_text, 0.75, 0.5)
+    item_place(excel_product_count_label, 0.19, 0.5)
+    item_place(excel_product_count_entry, 0.4, 0.5)
+    item_place(remove_sheet_metal_checkbox, 0.3, 0.625)
+    item_place(create_buttona, 0.3, 0.75)
     item_place(settings_button, 0.9, 0.1)
 
 
 place()
 # Tkinter penceresini başlat
 root.mainloop()
-#pyinstaller --onefile --noconsole --name Mil --icon=mil_icon.ico app.py
+# pyinstaller --onefile --noconsole --name Mil --icon=mil_icon.ico app.py
