@@ -4,6 +4,8 @@ import os
 import json
 from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button, create_scrolled_text
 import subprocess
+from tkinter import messagebox
+
 
 
 # Sabitler
@@ -145,6 +147,9 @@ def apply_colors(text):
 
     lines = text.split("\n")
 
+    # Birden fazla renk eşleşmesi için kullanılacak bir liste oluşturun
+    multiple_matches = []
+
     for line in lines:
         values = line.split("\t")
         formatted_line = []
@@ -152,7 +157,8 @@ def apply_colors(text):
         if len(values) >= 4:  # En az 4 değeri olan satırları işle
             # 1. değeri al (arasın kelime) ve küçük harfe çevir
             keyword_to_search = values[1].lower()
-            rgb_color = ""  # Varsayılan olarak boş renk
+            rgb_colors = set()  # Varsayılan olarak boş renk kümesi
+            matched_keywords = {}  # Eşleşen anahtar kelimeleri tutan dict
 
             for color, keywords in colors.items():
                 for keyword in keywords:
@@ -160,17 +166,49 @@ def apply_colors(text):
                     parts = keyword.lower().split("*")
                     # Bölünen parçaların hepsinin values[1]'de olup olmadığını kontrol et
                     if all(part in keyword_to_search for part in parts):
-                        rgb_color = color
+                        rgb_colors.add(color)
+                        # Eşleşen anahtar kelimeyi dict'e ekle
+                        matched_keywords[color] = keyword
                         break
 
+            # Eğer birden fazla renk eşleştiyse listeye ekleyin
+            if len(rgb_colors) > 1:
+                multiple_matches.append((keyword_to_search, matched_keywords))
+
+            # Renk eşleşmediğinde hata verme, boş bir renk ekleyerek devam et
+            if not rgb_colors:
+                rgb_colors.add("")
+
             # 4. değeri eklemek
-            values.append(rgb_color)
+            values.append(rgb_colors.pop())
 
         formatted_line = values
         result.append("\t".join(formatted_line))
+
+    # Tüm verileri işledikten sonra, result_excel_format'a dahil ediyoruz
     result_excel_format = "\n".join(result)
-    sorted_data_by_color = sort_data_by_color(result_excel_format)
-    return sorted_data_by_color
+    sorted_data_by_colora = sort_data_by_color(result_excel_format)
+
+    # Birden fazla renk eşleşmesini göster
+    if multiple_matches:
+        message = "Birden fazla renk eşleşti:\n"
+        for keyword, matched_keywords in multiple_matches:
+            message += f"{keyword} için:\n"
+            for color, keyword in matched_keywords.items():
+                message += f"{color}: {keyword}\n"
+
+        # Tkinter penceresi oluştur
+        root = tk.Tk()
+        root.withdraw()  # Pencereyi gizle
+
+        # Mesaj kutusu oluştur
+        messagebox.showinfo("Birden Fazla Renk Eşleşti", message)
+
+        # Pencereyi kapat
+        root.destroy()
+
+    return sorted_data_by_colora
+
 
 
 def validate_user_inputs(string):
@@ -234,14 +272,14 @@ def create_excel():
                 result = apply_colors(cleaned_text)
 
                 create_excelfn(result, order_name, product_name, excel_product_count,
-                               excel_file_path, order_notes)  # Temizlenmiş veri ile Excel oluştur
+                               excel_file_path, order_notes,pdf_file_path)  # Temizlenmiş veri ile Excel oluştur
             else:  # Eğer sac sil seçili değilse
                 # Kopyalanan metni olduğu gibi Excel'e yaz
                 # Veriyi temizle
                 result = apply_colors(copied_text)
                 # Yeni veriyi kopyala
                 create_excelfn(result, order_name, product_name,
-                               excel_product_count, excel_file_path, order_notes)
+                               excel_product_count, excel_file_path, order_notes,pdf_file_path)
             approval_label.config(
                 text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
             item_place(approval_label, 0.5, 0.4)
@@ -290,7 +328,7 @@ def create_excel():
 # Excel dosyasını oluşturmak için fonksiyon
 
 
-def create_excelfn(copied_text, order_name, product_name, excel_product_count, excel_file_path, order_notes):
+def create_excelfn(copied_text, order_name, product_name, excel_product_count, excel_file_path, order_notes,pdf_file_path):
 
     # Excel application'ı başlat
     excel = win32.gencache.EnsureDispatch('Excel.Application')
@@ -396,7 +434,6 @@ def create_excelfn(copied_text, order_name, product_name, excel_product_count, e
     # Define the PDF file path with the same name as the Excel file
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
 
-    pdf_file_path = os.path.splitext(excel_file_path)[0] + ".pdf"
 
     # Export the Excel worksheet as a PDF
     worksheet.ExportAsFixedFormat(0, pdf_file_path)
@@ -422,6 +459,7 @@ def forget():
     sheet_remove_button.place_forget()
     liste.place_forget()
     yscrollbar.place_forget()
+    notes_scrolled_text.place_forget()
     root.update()
 
 
