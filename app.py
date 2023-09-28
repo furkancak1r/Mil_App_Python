@@ -5,8 +5,8 @@ import json
 from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button, create_scrolled_text
 import subprocess
 from tkinter import messagebox
-
-
+import sys
+import pyautogui
 
 # Sabitler
 EXCEL_BORDER_STYLE = 1
@@ -139,7 +139,6 @@ def sort_data_by_color(data):
     # Sıralanmış verileri döndür
     return sorted_data
 
-
 def apply_colors(text):
     response = fetch_json_data(colors_path)
     colors = response["colors"]
@@ -147,69 +146,81 @@ def apply_colors(text):
 
     lines = text.split("\n")
 
-    # Birden fazla renk eşleşmesi için kullanılacak bir liste oluşturun
     multiple_matches = []
 
     for line in lines:
         values = line.split("\t")
         formatted_line = []
 
-        if len(values) >= 4:  # En az 4 değeri olan satırları işle
-            # 1. değeri al (arasın kelime) ve küçük harfe çevir
+        if len(values) >= 4:
             keyword_to_search = values[1].lower()
-            rgb_colors = set()  # Varsayılan olarak boş renk kümesi
-            matched_keywords = {}  # Eşleşen anahtar kelimeleri tutan dict
+            rgb_colors = set()
+            matched_keywords = {}
 
             for color, keywords in colors.items():
                 for keyword in keywords:
-                    # Anahtar kelimeleri * ile böl
-                    parts = keyword.lower().split("*")
-                    # Bölünen parçaların hepsinin values[1]'de olup olmadığını kontrol et
-                    if all(part in keyword_to_search for part in parts):
-                        rgb_colors.add(color)
-                        # Eşleşen anahtar kelimeyi dict'e ekle
-                        matched_keywords[color] = keyword
-                        break
+                    if keyword.startswith("$") and keyword.endswith("$"):
+                        full_matched_keyword = keyword[1:-1]
+                        full_matched_keyword_lowered = full_matched_keyword.lower()
+                        if full_matched_keyword_lowered in keyword_to_search.split():
+                            matched_keywords[color] = full_matched_keyword
+                    else:
+                        parts = keyword.lower().split("*")
+                        if all(part in keyword_to_search for part in parts):
+                            rgb_colors.add(color)
+                            matched_keywords[color] = keyword
+                            break
 
-            # Eğer birden fazla renk eşleştiyse listeye ekleyin
             if len(rgb_colors) > 1:
                 multiple_matches.append((keyword_to_search, matched_keywords))
 
-            # Renk eşleşmediğinde hata verme, boş bir renk ekleyerek devam et
             if not rgb_colors:
                 rgb_colors.add("")
 
-            # 4. değeri eklemek
             values.append(rgb_colors.pop())
 
         formatted_line = values
         result.append("\t".join(formatted_line))
 
-    # Tüm verileri işledikten sonra, result_excel_format'a dahil ediyoruz
     result_excel_format = "\n".join(result)
     sorted_data_by_colora = sort_data_by_color(result_excel_format)
 
-    # Birden fazla renk eşleşmesini göster
     if multiple_matches:
-        message = "Birden fazla renk eşleşti:\n"
+        message = "Excel ve Pdf oluşturulmayacaktır. Lütfen ayarlardan gerekli ayarlamaları yapın! Birden fazla renk eşleşti:\n"
         for keyword, matched_keywords in multiple_matches:
             message += f"{keyword} için:\n"
             for color, keyword in matched_keywords.items():
+                color_mapping = {
+                    "8696052": "#F4B084",
+                    "11992832": "#00FFB6",
+                    "65535": "#FFFF00",
+                    "13408767": "#FF99CC",
+                    "14395790": "#8AA9DB",
+                    "9359529": "#A9D08E",
+                    "10092441": "#99FF99"
+                }
+                color = color_mapping.get(color, color)
                 message += f"{color}: {keyword}\n"
-
-        # Tkinter penceresi oluştur
+        
         root = tk.Tk()
-        root.withdraw()  # Pencereyi gizle
+        root.withdraw()
 
-        # Mesaj kutusu oluştur
         messagebox.showinfo("Birden Fazla Renk Eşleşti", message)
 
-        # Pencereyi kapat
+        # Ekran görüntüsü al ve kaydet
+        take_screenshot_and_save()
         root.destroy()
+        sys.exit(0)
 
     return sorted_data_by_colora
 
 
+def take_screenshot_and_save():
+    # Ekran görüntüsü al
+    screenshot = pyautogui.screenshot()
+
+    # Ekran görüntüsünü aç
+    screenshot.show()
 
 def validate_user_inputs(string):
     # Kullanılamayacak semboller listesi
@@ -272,14 +283,14 @@ def create_excel():
                 result = apply_colors(cleaned_text)
 
                 create_excelfn(result, order_name, product_name, excel_product_count,
-                               excel_file_path, order_notes,pdf_file_path)  # Temizlenmiş veri ile Excel oluştur
+                               excel_file_path, order_notes, pdf_file_path)  # Temizlenmiş veri ile Excel oluştur
             else:  # Eğer sac sil seçili değilse
                 # Kopyalanan metni olduğu gibi Excel'e yaz
                 # Veriyi temizle
                 result = apply_colors(copied_text)
                 # Yeni veriyi kopyala
                 create_excelfn(result, order_name, product_name,
-                               excel_product_count, excel_file_path, order_notes,pdf_file_path)
+                               excel_product_count, excel_file_path, order_notes, pdf_file_path)
             approval_label.config(
                 text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
             item_place(approval_label, 0.5, 0.4)
@@ -328,7 +339,7 @@ def create_excel():
 # Excel dosyasını oluşturmak için fonksiyon
 
 
-def create_excelfn(copied_text, order_name, product_name, excel_product_count, excel_file_path, order_notes,pdf_file_path):
+def create_excelfn(copied_text, order_name, product_name, excel_product_count, excel_file_path, order_notes, pdf_file_path):
 
     # Excel application'ı başlat
     excel = win32.gencache.EnsureDispatch('Excel.Application')
@@ -433,7 +444,6 @@ def create_excelfn(copied_text, order_name, product_name, excel_product_count, e
     worksheet.PageSetup.FitToPagesTall = False
     # Define the PDF file path with the same name as the Excel file
     workbook.SaveAs(excel_file_path)  # Excel dosyasını belirtilen yere kaydet
-
 
     # Export the Excel worksheet as a PDF
     worksheet.ExportAsFixedFormat(0, pdf_file_path)
@@ -895,7 +905,7 @@ create_buttona = generate_create_button(
 product_name_label = create_label_with_style(
     root, "Ürün Adı:", "Custom.TLabel")
 add_color_label = create_label_with_style(
-    root, "Eğer bir satırda birden fazla kelimenin \neşleşmesini istiyorsanız kelime aralarına \n* koyun. Örnek: gözet*cam", "Note.TLabel")
+    root, "Eğer bir satırda birden fazla kelimenin \neşleşmesini istiyorsanız kelime aralarına \n* koyun. Örnek: gözet*cam \n Tam eşleşme sağlamak için kelimenin \nbaşına ve sonuna $ sembolü ekleyin. \nÖrnek: $fan$", "Note.TLabel")
 approval_label = create_label_with_style(root, "", "GreenApproval.TLabel")
 
 settings_label = create_label_with_style(root, "", "b.TLabel")
