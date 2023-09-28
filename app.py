@@ -78,16 +78,22 @@ def remove_selected_words(data):
     # Temizlenmiş veriyi birleştir ve döndür
     return "\n".join(cleaned_data)
 
-
-def validate_copied_text(copied_text):
-    # Metni küçük harfe çevirip sekme sayısını say
-    tab_count = copied_text.lower().count("\t")
-    lowercase_text = copied_text.lower()  # Metni küçük harfe çevir
-    # Belirli kelimeleri metinde küçük harfle ara
-    word_here = any(word in lowercase_text for word in [
-                    "adet", "kg", "pk", "mt", "metre", "takım"])
-    # Sekme sayısı 2'den fazla ve belirli kelime varsa True, aksi takdirde False döndür
-    return tab_count > 2 and word_here
+def validate_copied_text(copied_data):
+    # Kopyalanan veriyi satırlara böl
+    lines = copied_data.split("\n")
+    # Sonuncu line'ı atla
+    lines = lines[:-1]
+    # Her satır için
+    for line in lines:
+        # Satırı tab karakterine göre böl
+        columns = line.split("\t")
+        # Eğer kolon sayısı 4 değilse
+        if len(columns) != 4:
+            # False dön ve fonksiyondan çık
+            return False
+    # Eğer tüm satırlarda kolon sayısı 4 ise
+    # True dön
+    return True
 
 # Verileri alıp renklerine göre sıralayıp sıralanmış verileri dönen fonksiyon
 # Verileri alıp istediğiniz sıralamaya göre sıralayıp sıralanmış verileri dönen fonksiyon
@@ -151,6 +157,26 @@ def apply_colors(text):
     sorted_data_by_color = sort_data_by_color(result_excel_format)
     return sorted_data_by_color
 
+def validate_user_inputs(string):
+    # Kullanılamayacak semboller listesi
+    invalid_chars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
+    # Geçersiz sembollerin tutulacağı bir liste oluştur
+    found_chars = []
+    # Her bir sembol için
+    for char in invalid_chars:
+        # Eğer string içinde sembol varsa
+        if char in string:
+            # Sembolü bulunan listesine ekle
+            found_chars.append(char)
+    # Eğer bulunan listesi boş değilse
+    if found_chars:
+        # False ve bulunan listesini dön
+        return [False,found_chars]
+    # Eğer bulunan listesi boşsa
+    else:
+        # True ve boş liste dön
+        return [True,[]]
+
 
 def create_excel():
     try:
@@ -162,51 +188,89 @@ def create_excel():
         warning_label.config(text="Lütfen ürünleri kopyalayın!")
         item_place(warning_label, 0.5, 0.1)
 
-    if not validate_copied_text(copied_text):
+    elif not validate_copied_text(copied_text):
         warning_label.config(text="Yanlış içerik kopyalanmış!")
         item_place(warning_label, 0.5, 0.1)
 
         return
 
     else:
-        warning_label.destroy()  # Label'ı kaldır
-        approval_label.config(text="Excel ve Pdf oluşturuluyor...")
-        create_buttona.config(state="disabled")
-        item_place(approval_label, 0.5, 0.1)
-        root.update()  # Arayüzü güncelle
-        if sac_sil_flag.get():  # Eğer sac sil seçiliyse
-            # Kopyalanan metinden belirtilen kelimeleri sil
-            cleaned_text = remove_selected_words(copied_text)
-            result = apply_colors(cleaned_text)
+        warning_label.place_forget()  # Label'ı kaldır
+        order_name = order_number_entry.get()
+        current_directory =  os.path.expanduser("~/Desktop")
+        product_name = product_name_entry.get()
+        excel_product_count = excel_product_count_entry.get()
+        order_name_validate=validate_user_inputs(order_name)
+        product_name_validate=validate_user_inputs(product_name)
 
-            create_excelfn(result)  # Temizlenmiş veri ile Excel oluştur
-        else:  # Eğer sac sil seçili değilse
-            # Kopyalanan metni olduğu gibi Excel'e yaz
-            # Veriyi temizle
-            result = apply_colors(copied_text)
-            # Yeni veriyi kopyala
-            create_excelfn(result)
-        approval_label.config(text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
-        item_place(approval_label, 0.5, 0.4)
+        # Eğer order_name veya product_name içinde özel sembol varsa
+        if not order_name_validate[0] or not product_name_validate[0]:
+
+            # Eğer order_name içinde özel sembol varsa
+            if not order_name_validate[0]:
+                # Uyarı mesajında order_name ve bulunan semboller göster
+                warning_label.config(text=f"Sipariş numarasında kullanılamayacak semboller var: {', '.join(order_name_validate[1])}", style="RedWarning.TLabel")
+                item_place(warning_label, 0.5, 0.1)
+
+            
+            # Eğer product_name içinde özel sembol varsa
+            if not product_name_validate[0]:
+                # Uyarı mesajında product_name ve bulunan semboller göster
+                warning_label.config(text=f"Ürün adında kullanılamayacak semboller var: {', '.join(product_name_validate[1])}", style="RedWarning.TLabel")
+                item_place(warning_label, 0.5, 0.1)
+
+
+            return None
+
+        # Klasör yolu oluşturun
+        folder_path = os.path.join(current_directory, order_name)
+        # Eğer klasör zaten varsa
+        if os.path.exists(folder_path):
+            # Uyarı mesajı göster
+            warning_label.config(text="Bu isimde bir klasör zaten var!", style="RedWarning.TLabel")
+        
+            item_place(warning_label, 0.5, 0.1)
+            return None
+        # Eğer klasör yoksa
+        else:
+            approval_label.config(text="Excel ve Pdf oluşturuluyor...")
+            create_buttona.config(state="disabled")
+            item_place(approval_label, 0.5, 0.1)
+            root.update()  # Arayüzü güncelle
+
+            # Klasörü oluştur
+            os.mkdir(folder_path)
+            excel_file_path = os.path.join(
+                current_directory, order_name, order_name+" "+product_name)  # Excel dosyasının tam yolu
+
+            if sac_sil_flag.get():  # Eğer sac sil seçiliyse
+                # Kopyalanan metinden belirtilen kelimeleri sil
+                cleaned_text = remove_selected_words(copied_text)
+                result = apply_colors(cleaned_text)
+
+                create_excelfn(result,order_name,product_name,excel_product_count,excel_file_path)  # Temizlenmiş veri ile Excel oluştur
+            else:  # Eğer sac sil seçili değilse
+                # Kopyalanan metni olduğu gibi Excel'e yaz
+                # Veriyi temizle
+                result = apply_colors(copied_text)
+                # Yeni veriyi kopyala
+                create_excelfn(result,order_name,product_name,excel_product_count,excel_file_path)
+            approval_label.config(text="Excel ve Pdf oluşturuldu!")  # Sonucu göster
+            item_place(approval_label, 0.5, 0.4)
 
 # Excel dosyasını oluşturmak için fonksiyon
 
 
-def create_excelfn(copied_text):
+def create_excelfn(copied_text,order_name,product_name,excel_product_count,excel_file_path):
+
     # Excel application'ı başlat
     excel = win32.gencache.EnsureDispatch('Excel.Application')
     excel.Visible = True  # Excel penceresini görünür yap
 
-    product_name = product_name_entry.get()
-    order_name = order_number_entry.get()
 
-    excel_product_count = excel_product_count_entry.get()
 
-    current_directory = os.getcwd()  # Python dosyasının bulunduğu dizin
-    os.mkdir(os.path.join(current_directory, order_name))  # Klasörü oluşturur
 
-    excel_file_path = os.path.join(
-        current_directory, order_name, order_name+" "+product_name)  # Excel dosyasının tam yolu
+
 
     # Excel dosyasını oluştur
     workbook = excel.Workbooks.Add()
@@ -616,7 +680,7 @@ def handle_add_color_button():
         root.after(1500, lambda: approval_label.place_forget())
         # Girdi alanını temizle
         add_color_entry.delete(0, 'end')
-        add_color_entry.config(state="disabled")
+        add_color_button.config(state="disabled")
 
         update_list_with_index(liste, colors_path, idx)
 
