@@ -205,12 +205,12 @@ def apply_colors(text):
         root = tk.Tk()
         root.withdraw()
 
-        messagebox.showinfo("Birden Fazla Renk Eşleşti", message)
-
-        # Ekran görüntüsü al ve kaydet
-        take_screenshot_and_save()
-        root.destroy()
-        sys.exit(0)
+        result = messagebox.showinfo("Birden Fazla Renk Eşleşti", message)
+        if result :
+            # Ekran görüntüsü al ve kaydet
+            take_screenshot_and_save()
+            root.destroy()
+            sys.exit(0)
 
     return sorted_data_by_colora
 
