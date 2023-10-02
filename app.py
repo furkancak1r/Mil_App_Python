@@ -94,19 +94,27 @@ def remove_selected_words(data):
 
 
 def validate_copied_text(copied_data):
-    # Kopyalanan veriyi satırlara böl
+  # Kopyalanan veriyi satırlara böl
     lines = copied_data.split("\n")
     # Sonuncu line'ı atla
     lines = lines[:-1]
     # Her satır için
-    for line in lines:
-        # Satırı tab karakterine göre böl
-        columns = line.split("\t")
-        # Eğer kolon sayısı 4 değilse
-        if len(columns) != 4:
-            # False dön ve fonksiyondan çık
-            return False
+    lowercase_text = copied_data.lower()  # Metni küçük harfe çevir
+    # Belirli kelimeleri metinde küçük harfle ara
+    word_here = any(word in lowercase_text for word in [
+                    "adet", "kg", "pk", "mt", "metre", "takım"])
+    if lines and word_here:
+        for line in lines:
+            # Satırı tab karakterine göre böl
+            columns = line.split("\t")
+            # Eğer kolon sayısı 4 değilse
+            if len(columns) != 4:
+                # False dön ve fonksiyondan çık
+                return False
     # Eğer tüm satırlarda kolon sayısı 4 ise
+    else:
+        return False
+
     # True dön
     return True
 
@@ -269,11 +277,11 @@ def create_excel():
     if not copied_text:
         warning_label.config(text="Lütfen ürünleri kopyalayın!")
         item_place(warning_label, 0.5, 0.1)
-
+   
     elif not validate_copied_text(copied_text):
         warning_label.config(text="Yanlış içerik kopyalanmış!")
         item_place(warning_label, 0.5, 0.1)
-
+        
         return
 
     else:
