@@ -4,9 +4,7 @@ import os
 import json
 from elements.ttkElements import create_button, create_add_button, generate_create_button, item_place, place_list, create_label_with_style, create_entry, create_remove_sheet_metal_checkbox_entry, create_color_liste, create_liste, create_yscrollbar, create_root, create_add_color_button, create_scrolled_text
 import subprocess
-from tkinter import messagebox
 import sys
-import pyautogui
 
 # Sabitler
 EXCEL_BORDER_STYLE = 1
@@ -164,19 +162,29 @@ def apply_colors(text):
                         full_matched_keyword_lowered = full_matched_keyword.lower()
                         if full_matched_keyword_lowered in keyword_to_search.split():
                             matched_keywords[color] = full_matched_keyword
+                            rgb_colors.add(color)
+
                     else:
                         parts = keyword.lower().split("*")
+                        for part in parts:
+                            if part.startswith("$") and part.endswith("$"):
+                                full_matched_keyword = part[1:-1]
+                                full_matched_keyword_lowered = full_matched_keyword.lower()
+                                if full_matched_keyword_lowered in keyword_to_search.split():
+                                    rgb_colors.add(color)
+
+                                    matched_keywords[color] = full_matched_keyword
                         if all(part in keyword_to_search for part in parts):
                             rgb_colors.add(color)
                             matched_keywords[color] = keyword
                             break
 
             if len(rgb_colors) > 1:
+
                 multiple_matches.append((keyword_to_search, matched_keywords))
 
             if not rgb_colors:
                 rgb_colors.add("")
-
             values.append(rgb_colors.pop())
 
         formatted_line = values
@@ -202,25 +210,34 @@ def apply_colors(text):
                 color = color_mapping.get(color, color)
                 message += f"{color}: {keyword}\n"
         
-        root = tk.Tk()
-        root.withdraw()
-
-        result = messagebox.showinfo("Birden Fazla Renk Eşleşti", message)
-        if result :
-            # Ekran görüntüsü al ve kaydet
-            take_screenshot_and_save()
-            root.destroy()
-            sys.exit(0)
+        write_to_txt(message)
+        sys.exit(0)
 
     return sorted_data_by_colora
 
 
-def take_screenshot_and_save():
-    # Ekran görüntüsü al
-    screenshot = pyautogui.screenshot()
+def write_to_txt(message):
+    # Dosyanın konumunu belirleyin
+    dosya_konumu = os.path.join(os.environ["USERPROFILE"], "Desktop")
 
-    # Ekran görüntüsünü aç
-    screenshot.show()
+    # Dosya adını bir değişkene atayın
+    dosya_adi = "renkler hata 1"
+
+    # Dosyanın var olup olmadığını kontrol edin
+    while os.path.exists(os.path.join(dosya_konumu, dosya_adi + ".txt")):
+        # Eğer dosya varsa, dosya adını bir artırın
+        dosya_adi = dosya_adi[:-1] + str(int(dosya_adi[-1]) + 1)
+
+    # Dosyayı yazma modunda açın
+    with open(os.path.join(dosya_konumu, dosya_adi + ".txt"), "w") as dosya:
+        # Dosyaya merhaba yazın
+        dosya.write(message)
+        # Dosyayı kapatın
+        dosya.close()
+
+    # Dosyayı varsayılan uygulamayla açın
+    os.startfile(dosya_konumu + "\\" + dosya_adi + ".txt")
+
 
 def validate_user_inputs(string):
     # Kullanılamayacak semboller listesi
