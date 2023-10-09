@@ -145,6 +145,7 @@ def sort_data_by_color(data):
     # Sıralanmış verileri döndür
     return sorted_data
 
+
 def apply_colors(text):
     response = fetch_json_data(colors_path)
     colors = response["colors"]
@@ -217,7 +218,7 @@ def apply_colors(text):
                 }
                 color = color_mapping.get(color, color)
                 message += f"{color}: {keyword}\n"
-        
+
         write_to_txt(message)
         sys.exit(0)
 
@@ -277,11 +278,11 @@ def create_excel():
     if not copied_text:
         warning_label.config(text="Lütfen ürünleri kopyalayın!")
         item_place(warning_label, 0.5, 0.1)
-   
+
     elif not validate_copied_text(copied_text):
         warning_label.config(text="Yanlış içerik kopyalanmış!")
         item_place(warning_label, 0.5, 0.1)
-        
+
         return
 
     else:

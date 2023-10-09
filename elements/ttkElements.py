@@ -117,9 +117,18 @@ def create_entry(root, entry_name):
         else:
             return False
 
+    def validate_space(P):
+        if " " in P or "\t" in P:
+            return False
+        else:
+            return True
+
     if entry_name == "excel_product_count_entry":
         validate = "key"
         validatecommand = (root.register(validate_input), "%P")
+    elif entry_name == "add_color_entry":
+        validate = "key"
+        validatecommand = (root.register(validate_space), "%P")
     else:
         validate = None
         validatecommand = None
