@@ -238,7 +238,7 @@ def write_to_txt(message):
         dosya_adi = dosya_adi[:-1] + str(int(dosya_adi[-1]) + 1)
 
     # Dosyayı yazma modunda açın
-    with open(os.path.join(dosya_konumu, dosya_adi + ".txt"), "w") as dosya:
+    with open(os.path.join(dosya_konumu, dosya_adi + ".txt"), "w", encoding='utf-8') as dosya:
         # Dosyaya merhaba yazın
         dosya.write(message)
         # Dosyayı kapatın
